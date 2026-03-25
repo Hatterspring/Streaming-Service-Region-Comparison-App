@@ -1,4 +1,6 @@
 package com.example.streamingserviceregioncomparisonapp.ui;
 
-public class SettingsViewModel {
+import androidx.lifecycle.ViewModel;
+
+class SettingsViewModel : ViewModel() {
 }

@@ -1,4 +1,6 @@
 package com.example.streamingserviceregioncomparisonapp.ui;
 
-public class CompViewModel {
+import androidx.lifecycle.ViewModel;
+
+class CompViewModel : ViewModel() {
 }
