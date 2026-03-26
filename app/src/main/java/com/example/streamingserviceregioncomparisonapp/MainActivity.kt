@@ -1,26 +1,30 @@
 package com.example.streamingserviceregioncomparisonapp
 
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.streamingserviceregioncomparisonapp.ui.Comparison
 import com.example.streamingserviceregioncomparisonapp.ui.theme.StreamingServiceRegionComparisonAppTheme
 
+/*val keystoreFile = project.rootProject.file("apikeys.properties")
+        val properties = Properties()
+        properties.load(keystoreFile.inputStream())
+        val apiKey =  properties.getProperty("tmdbApiKey") ?: ""
+        buildConfigField(type="String",name="API_KEY",value="\"$apiKey\"")
+
+        val accessToken = properties.getProperty("tmdbAccessToken") ?: ""
+        buildConfigField(type="String",name="ACCESS_TOKEN", value="\"$accessToken\"") */
 class MainActivity : ComponentActivity() {
 
     @Preview(showBackground=true)
     @Composable
     fun ComparisonPreview() {
-        Comparison("Comp")
+        Comparison()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,9 +40,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                 }*/
-                Comparison(
-                    name="Comp"
-                )
+                Comparison()
             }
         }
     }

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -8,6 +10,11 @@ android {
     namespace = "com.example.streamingserviceregioncomparisonapp"
     compileSdk = 36
 
+    buildFeatures {
+        compose = true
+        buildConfig=true
+    }
+    
     defaultConfig {
         applicationId = "com.example.streamingserviceregioncomparisonapp"
         minSdk = 24
@@ -16,6 +23,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val keystoreFile = project.rootProject.file("apikeys.properties")
+        val properties = Properties()
+        properties.load(keystoreFile.inputStream())
+        val apiKey =  properties.getProperty("tmdbApiKey") ?: ""
+        buildConfigField(type="String",name="API_KEY",value="\"$apiKey\"")
+
+        val accessToken = properties.getProperty("tmdbAccessToken") ?: ""
+        buildConfigField(type="String",name="ACCESS_TOKEN", value="\"$accessToken\"")
     }
 
     buildTypes {
@@ -34,9 +49,7 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        compose = true
-    }
+
 }
 
 dependencies {
@@ -50,6 +63,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.runtime.livedata)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -57,4 +72,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 }

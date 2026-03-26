@@ -12,23 +12,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-
 import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Comparison(name: String, modifier: Modifier = Modifier) {
+fun Comparison(modifier: Modifier = Modifier) {
     val navController: NavHostController = rememberNavController()
     val menuViewModel: MenuViewModel = viewModel()
     val settingsViewModel: SettingsViewModel = viewModel()
@@ -63,10 +58,10 @@ fun Comparison(name: String, modifier: Modifier = Modifier) {
                 MenuScreen(navController, menuViewModel, modifier)
             }
             composable(route=Screens.Settings.name) {
-                SettingsScreen(navController, modifier)
+                SettingsScreen(settingsViewModel, modifier)
             }
             composable(route=Screens.Comp.name) {
-                CompScreen(navController, menuViewModel.uiState.collectAsState().value, modifier)
+                CompScreen(navController, compViewModel, modifier)
             }
         }
     }

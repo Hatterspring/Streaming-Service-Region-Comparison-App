@@ -11,9 +11,9 @@ import androidx.navigation.NavController
 @Composable
 fun CompScreen(
     navController: NavController,
-    movie: String,
+    compViewModel: CompViewModel,
     modifier: Modifier
 ) {
 
-    Text("Your movie is " + movie)
+    Text("Your movie is ")
 }
