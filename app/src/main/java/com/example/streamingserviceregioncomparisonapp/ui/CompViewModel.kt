@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
@@ -24,31 +25,31 @@ class CompViewModel() : ViewModel() {
     private val accessToken = BuildConfig.ACCESS_TOKEN
 
     fun fetchMovieDetails(movie: String) {
-
         /*ContextCompat.checkSelfPermission(,
             Manifest.permission.ACCESS_NETWORK_STATE) != PackageManager.PERMISSION_GRANTED)*/
         viewModelScope.launch(Dispatchers.IO) {
-            val moviejson = getMovie(movie)
-            Log.i("json", moviejson)
-            //_uiState.update({ getJSONFromApi("https://api.openweathermap.org/data/2.5/forecast?lat=&lon=&units=metric&appid=$apiKey") })
-            //Log.i("json", _uiState.value)
+            //val moviejson = getMovie(movie)
+            //Log.i("json", moviejson)
+            _uiState.update { getMovieJSON(movie) }
+            Log.d("unobserved state", _uiState.value)
         }
     }
 
-    private fun getMovie(movie:String): String {
+    private fun getMovieJSON(movie:String): String {
         //build the URL using the user entered movie
-        val url1 =
-            "https://api.themoviedb.org/3/search/movie?query=Batman&callback=test"
-        Log.d("getCoordinates url1", url1)
+        val url =
+            "https://api.themoviedb.org/3/movie/11"
+        Log.d("getMovie url", url)
         try {
-            val response = getJSONFromApi(url1)
-            Log.d("getCoordinates",response)
-            val cityArray = JSONArray(response)
-
+            val response = getJSONFromApi(url)
+            Log.d("getMovie",response)
+            //val cityArray = JSONArray(response)
+            //Log.d("success!",cityArray.toString())
             return response
         }catch (e: Exception) {
             e.printStackTrace()
         }
+        Log.d("unsuccessful", "message wasn't committed to state")
         return ""
     }
 
@@ -60,18 +61,24 @@ class CompViewModel() : ViewModel() {
             val request = URL(url)
             conn = request.openConnection() as
                     HttpsURLConnection
-            conn.connect()
-            val inStream: InputStream =
-                conn.inputStream
             result =
-                convertInputStreamToString(inStream)
+                convertInputStreamToString(sendApiRequest(url, conn))
+            //parseJSON(result)
         } catch (e: Exception) {
             e.printStackTrace()
             result = "Network Error! Please check the network connection!"
         } finally {
             conn?.disconnect()
         }
+
         return result //returns the fetched JSON string
+    }
+
+    private fun sendApiRequest(url: String, conn: HttpsURLConnection): InputStream {
+        conn.setRequestProperty("Authorization", "Bearer $accessToken")
+        Log.d("connection", conn.toString())
+        conn.connect()
+        return conn.inputStream
     }
 
     // The helper function that converts the input stream to String
@@ -87,5 +94,16 @@ class CompViewModel() : ViewModel() {
         // Close the input stream and return
         inS.close()
         return result.toString()
+    }
+
+    fun parseJSON(json: String){
+        val jObject = JSONObject(json)
+        Log.d("dataObjectInfo", "got here1")
+        //val jArray = jObject.getJSONArray("adult")
+        Log.d("dataObjectInfo", "got here2")
+        //val dataObject = jArray.getJSONObject(1)
+        Log.d("dataObjectInfo", "got here3")
+        val value1 = jObject.getString("adult")
+        Log.i("dataObject", value1)
     }
 }
