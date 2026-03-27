@@ -55,7 +55,7 @@ fun Comparison(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(route=Screens.Menu.name) {
-                MenuScreen(navController, menuViewModel, modifier)
+                MenuScreen(navController, menuViewModel, compViewModel, modifier)
             }
             composable(route=Screens.Settings.name) {
                 SettingsScreen(settingsViewModel, modifier)

@@ -16,6 +16,7 @@ import androidx.navigation.NavController
 fun MenuScreen(
         navController: NavController,
         viewmodel: MenuViewModel,
+        compViewModel: CompViewModel,
         modifier: Modifier
 ) {
     var movie by remember {mutableStateOf("")}
@@ -29,7 +30,10 @@ fun MenuScreen(
                 viewmodel.updateMovie(movie)
             }
         )
-        Button(onClick = {navController.navigate(Screens.Comp.name)}) { Text("Find!") }
+        Button(onClick = {
+            compViewModel.fetchMovieDetails("Batman")
+            navController.navigate(Screens.Comp.name)
+        }) { Text("Find!") }
 
     }
 }
