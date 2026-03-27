@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.IOException
@@ -23,13 +24,14 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.URL
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import javax.net.ssl.HttpsURLConnection
 import kotlin.arrayOf
 
 class CompViewModel() : ViewModel() {
     private val _movieState = MutableStateFlow(arrayOf(""))
     val movieState = _movieState.asStateFlow()
-    private val _streamingState = MutableStateFlow(arrayOf(""))
+    private val _streamingState = MutableStateFlow(mapOf("" to SSByRegion(null,null,null)))
     val streamingState = _streamingState.asStateFlow()
     private val apiKey = BuildConfig.API_KEY
     private val accessToken = BuildConfig.ACCESS_TOKEN
@@ -39,13 +41,15 @@ class CompViewModel() : ViewModel() {
         /*ContextCompat.checkSelfPermission(,
             Manifest.permission.ACCESS_NETWORK_STATE) != PackageManager.PERMISSION_GRANTED)*/
         viewModelScope.launch(Dispatchers.IO) {
+            val sanMovie = URLEncoder.encode(movie, StandardCharsets.UTF_8.toString())
             val movieJSON = getResponse(baseUrl+"search/movie?query=$movie")
             val movieDetails = parseMovieInfoJSON(movieJSON)
             _movieState.update ({ movieDetails })
             Log.d("unobserved state", _movieState.value.toString())
-            /*val id = movieDetails[0]
+            val id = movieDetails[0]
             val streamingJSON = getResponse(baseUrl+"movie/$id/watch/providers")
-            val streamingDetails = parseStreamingInfoJSON(streamingJSON)*/
+            val streamingDetails = parseStreamingInfoJSON(streamingJSON)
+            _streamingState.update { streamingDetails }
         }
     }
 
@@ -107,7 +111,7 @@ class CompViewModel() : ViewModel() {
     fun parseMovieInfoJSON(json: String): Array<String>{
         val jObject = JSONObject(json)
         val jArray = jObject.getJSONArray("results")
-        val dataObject = jArray.getJSONObject(1)
+        val dataObject = jArray.getJSONObject(0)
         val id = dataObject.getString("id")
         val title = dataObject.getString("title")
         val overview = dataObject.getString("overview")
@@ -117,13 +121,52 @@ class CompViewModel() : ViewModel() {
         return arrayOf(id, title, overview, backdrop, releasedate, voteav)
     }
 
-    fun parseStreamingInfoJSON(json: String): Map<String,List<String>> {
-        var out: MutableMap<String, List<String>> = mutableMapOf()
+    fun parseStreamingInfoJSON(json: String): Map<String,SSByRegion> {
+        var out: MutableMap<String, SSByRegion> = mutableMapOf()
         val resultsObject = JSONObject(json).getJSONObject("results")
-
-
-
+        val objIterator = resultsObject.keys().iterator()
+        while (objIterator.hasNext()) {
+            val region = objIterator.next()
+            val info = resultsObject.getJSONObject(region)
+            out.put(region, parseRegionalStreamingInfo(info))
+        }
         return out
     }
+
+    fun parseRegionalStreamingInfo(region: JSONObject): SSByRegion {
+        var b: MutableList<String> ?= mutableListOf()
+        var r: MutableList<String> ?= mutableListOf()
+        var fr: MutableList<String> ?= mutableListOf()
+
+        try {
+            val bArray: JSONArray = region.getJSONArray("buy")
+            for (x in 0 until (bArray.length())) {
+                b?.add(bArray.getJSONObject(x)?.get("provider_name").toString())
+            }
+        } catch (e: JSONException) {
+            Log.e("No buy section", e.toString())
+        }
+
+        try {
+            val rArray: JSONArray = region.getJSONArray("rent")
+            for (y in 0 until (rArray.length())) {
+                r?.add(rArray.getJSONObject(y)?.get("provider_name").toString())
+            }
+        } catch (e: JSONException) {
+            Log.e("No rent section", e.toString())
+        }
+        try {
+            val frArray: JSONArray = region.getJSONArray("flatrate")
+            for (z in 0 until (frArray.length())) {
+                fr?.add(frArray.getJSONObject(z).get("provider_name").toString())
+            }
+        } catch (e: JSONException) {
+            Log.e("No flatrate section", e.toString())
+        }
+
+        return SSByRegion(b,r,fr)
+    }
+
+    data class SSByRegion(val b: List<String>?, val r: List<String>?, val fr: List<String>?)
 
 }

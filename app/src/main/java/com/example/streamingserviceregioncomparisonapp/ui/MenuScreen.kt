@@ -31,7 +31,7 @@ fun MenuScreen(
             }
         )
         Button(onClick = {
-            compViewModel.fetchMovieDetails("Batman")
+            compViewModel.fetchMovieDetails(movie)
             navController.navigate(Screens.Comp.name)
         }) { Text("Find!") }
 
