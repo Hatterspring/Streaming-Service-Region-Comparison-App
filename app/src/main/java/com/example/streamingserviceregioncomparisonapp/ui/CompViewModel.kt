@@ -50,6 +50,7 @@ class CompViewModel() : ViewModel() {
             val streamingJSON = getResponse(baseUrl+"movie/$id/watch/providers")
             val streamingDetails = parseStreamingInfoJSON(streamingJSON)
             _streamingState.update { streamingDetails }
+            Log.i("streamingState", _streamingState.value.toString())
         }
     }
 

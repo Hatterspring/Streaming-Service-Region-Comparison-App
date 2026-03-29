@@ -251,6 +251,7 @@
     <inspection_tool class="AndroidLintLifecycleAnnotationProcessorWithJava8" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidLintLifecycleCurrentStateInComposition" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="AndroidLintLocalContextConfigurationRead" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="AndroidLintLocalContextGetResourceValueCall" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintLocalContextResourcesRead" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidLintLocalSuppress" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="AndroidLintLocaleFolder" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -319,6 +320,7 @@
     <inspection_tool class="AndroidLintNoHardKeywords" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintNoOp" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintNonConstantResourceId" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="AndroidLintNonObservableLocale" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintNonResizeableActivity" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidLintNotConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidLintNotInterpolated" enabled="true" level="ERROR" enabled_by_default="true" />
@@ -392,6 +394,10 @@
     <inspection_tool class="AndroidLintResourceName" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="AndroidLintResourceType" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="AndroidLintRestrictedApi" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="AndroidLintRetainLeaksContext" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintRetainRememberObserver" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintRetainUnitType" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintRetainingDoNotRetainType" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintReturnFromAwaitPointerEventScope" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidLintReturnThis" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="AndroidLintRiskyLibrary" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -1426,7 +1432,7 @@
     <inspection_tool class="IncrementDecrementUsedAsExpression" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="IndexOfReplaceableByContains" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="InfiniteLoopStatement" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="InfiniteRecursion" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="InfiniteRecursion" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InfixCallToOrdinary" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="InjectedReferences" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="InjectionNotApplicable" enabled="true" level="ERROR" enabled_by_default="true" />
