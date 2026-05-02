@@ -1,0 +1,1 @@
+This is a university project designed to demonstrate my proficiency in android studio & Kotlin. It is a simple app that uses API calls to display region & streaming service information about given movies & TV shows.
