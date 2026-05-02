@@ -1,25 +1,18 @@
-package com.example.streamingserviceregioncomparisonapp.ui;
+package com.example.streamingserviceregioncomparisonapp.ui.settings
 
 import android.app.Application
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.streamingserviceregioncomparisonapp.data.DataStoreException
 import com.example.streamingserviceregioncomparisonapp.data.RegionPreferenceManager
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.jvm.Throws
-import kotlin.reflect.KClass
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val regionPrefsMan = RegionPreferenceManager(application)

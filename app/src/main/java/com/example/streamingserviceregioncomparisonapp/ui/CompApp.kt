@@ -13,13 +13,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.streamingserviceregioncomparisonapp.ui.comparison.CompScreen
+import com.example.streamingserviceregioncomparisonapp.ui.comparison.CompViewModel
+import com.example.streamingserviceregioncomparisonapp.ui.menu.MenuScreen
+import com.example.streamingserviceregioncomparisonapp.ui.menu.MenuViewModel
+import com.example.streamingserviceregioncomparisonapp.ui.settings.SettingsScreen
+import com.example.streamingserviceregioncomparisonapp.ui.settings.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +66,7 @@ fun Comparison(modifier: Modifier = Modifier) {
                 SettingsScreen(settingsViewModel, modifier)
             }
             composable(route=Screens.Comp.name) {
-                CompScreen(navController, compViewModel, modifier)
+                CompScreen(navController, compViewModel, settingsViewModel, modifier)
             }
         }
     }

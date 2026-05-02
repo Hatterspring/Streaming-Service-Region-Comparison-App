@@ -1,20 +1,19 @@
-package com.example.streamingserviceregioncomparisonapp.ui;
+package com.example.streamingserviceregioncomparisonapp.ui.comparison
 
-//https://api.themoviedb.org/3/movie/244786/watch/providers
-
-import android.net.http.HttpException
-import android.os.Build
+import android.content.Context
 import android.util.Log
-import androidx.annotation.RequiresExtension
-import androidx.lifecycle.ViewModel;
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.streamingserviceregioncomparisonapp.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -26,31 +25,47 @@ import java.net.URL
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import javax.net.ssl.HttpsURLConnection
-import kotlin.arrayOf
 
 class CompViewModel() : ViewModel() {
     private val _movieState = MutableStateFlow(arrayOf(""))
     val movieState = _movieState.asStateFlow()
-    private val _streamingState = MutableStateFlow(mapOf("" to SSByRegion(null,null,null)))
+    private val _streamingState = MutableStateFlow(mapOf("" to SSByRegion(null, null, null)))
     val streamingState = _streamingState.asStateFlow()
     private val apiKey = BuildConfig.API_KEY
     private val accessToken = BuildConfig.ACCESS_TOKEN
     private val baseUrl = "https://api.themoviedb.org/3/"
 
-    fun fetchMovieDetails(movie: String) {
+
+
+    @Throws(MovieNotFoundException::class)
+    fun fetchMovieDetails(movie: String, context: Context) {
         /*ContextCompat.checkSelfPermission(,
             Manifest.permission.ACCESS_NETWORK_STATE) != PackageManager.PERMISSION_GRANTED)*/
+
         viewModelScope.launch(Dispatchers.IO) {
-            val sanMovie = URLEncoder.encode(movie, StandardCharsets.UTF_8.toString())
+            _movieState.update { arrayOf("") }
+            _streamingState.update { mapOf("" to SSByRegion())}
+            //val sanMovie = URLEncoder.encode(movie, StandardCharsets.UTF_8.toString())
             val movieJSON = getResponse(baseUrl+"search/movie?query=$movie")
-            val movieDetails = parseMovieInfoJSON(movieJSON)
-            _movieState.update ({ movieDetails })
-            Log.d("unobserved state", _movieState.value.toString())
-            val id = movieDetails[0]
-            val streamingJSON = getResponse(baseUrl+"movie/$id/watch/providers")
-            val streamingDetails = parseStreamingInfoJSON(streamingJSON)
-            _streamingState.update { streamingDetails }
-            Log.i("streamingState", _streamingState.value.toString())
+            try {
+                val movieDetails = parseMovieInfoJSON(movieJSON)
+                val id = movieDetails[0]
+                if ("Network Error! Please check the network connection!" in id) {
+                    throw MovieNotFoundException(id)
+                }
+                _movieState.update({ movieDetails })
+                Log.d("unobserved state", _movieState.value.toString())
+                val streamingJSON = getResponse(baseUrl+"movie/$id/watch/providers")
+                val streamingDetails = parseStreamingInfoJSON(streamingJSON)
+                _streamingState.update { streamingDetails }
+                Log.i("streamingState", _streamingState.value.toString())
+            } catch (e: MovieNotFoundException) {
+                withContext(context=Dispatchers.Main){
+                    Toast.makeText(context, e.message.toString(), Toast.LENGTH_SHORT).show()
+                }
+
+            }
+
         }
     }
 
@@ -109,9 +124,16 @@ class CompViewModel() : ViewModel() {
         return result.toString()
     }
 
+    @Throws(MovieNotFoundException::class)
     fun parseMovieInfoJSON(json: String): Array<String>{
+        if ("Network Error! Please check the network connection!" in json) {
+            return arrayOf("Network Error! Please check the network connection!")
+        }
         val jObject = JSONObject(json)
         val jArray = jObject.getJSONArray("results")
+        if (jArray.length() == 0) {
+            throw MovieNotFoundException("No movies from query!")
+        }
         val dataObject = jArray.getJSONObject(0)
         val id = dataObject.getString("id")
         val title = dataObject.getString("title")
@@ -168,6 +190,6 @@ class CompViewModel() : ViewModel() {
         return SSByRegion(b,r,fr)
     }
 
-    data class SSByRegion(val b: List<String>?, val r: List<String>?, val fr: List<String>?)
+    data class SSByRegion(val b: List<String>? = null, val r: List<String>? = null, val fr: List<String>? = null)
 
 }

@@ -1,7 +1,6 @@
 package com.example.streamingserviceregioncomparisonapp.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -20,6 +19,7 @@ class RegionPreferenceManager(private val context: Context) {
             preferences[REGION_NAME_KEY]
         }
 
+    @Throws(DataStoreException::class)
     suspend fun saveRegionName(regionName: String) {
         val cc: String = (countryToCode(regionName) ?: "")
         if (cc.isEmpty()) {
