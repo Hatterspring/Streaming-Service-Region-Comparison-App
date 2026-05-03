@@ -1,8 +1,12 @@
 package com.example.streamingserviceregioncomparisonapp.ui.comparison
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
@@ -31,11 +35,11 @@ class CompViewModel() : ViewModel() {
     val movieState = _movieState.asStateFlow()
     private val _streamingState = MutableStateFlow(mapOf("" to SSByRegion(null, null, null)))
     val streamingState = _streamingState.asStateFlow()
+    val _typeState = MutableStateFlow(movieTypes.BUY    )
+    val typeState = _typeState.asStateFlow()
     private val apiKey = BuildConfig.API_KEY
     private val accessToken = BuildConfig.ACCESS_TOKEN
     private val baseUrl = "https://api.themoviedb.org/3/"
-
-
 
     @Throws(MovieNotFoundException::class)
     fun fetchMovieDetails(movie: String, context: Context) {
@@ -66,6 +70,14 @@ class CompViewModel() : ViewModel() {
 
             }
 
+        }
+    }
+
+
+    fun changeServiceType(mt: movieTypes) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _typeState.update { mt }
+            Log.d("typestate", typeState.value.toString())
         }
     }
 
@@ -191,5 +203,11 @@ class CompViewModel() : ViewModel() {
     }
 
     data class SSByRegion(val b: List<String>? = null, val r: List<String>? = null, val fr: List<String>? = null)
+
+    enum class movieTypes {
+        BUY,
+        RENT,
+        STREAM,
+    }
 
 }
