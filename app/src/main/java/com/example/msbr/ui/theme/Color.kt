@@ -1,4 +1,4 @@
-package com.example.streamingserviceregioncomparisonapp.ui.theme
+package com.example.msbr.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

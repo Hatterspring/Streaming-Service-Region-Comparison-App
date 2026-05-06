@@ -1,5 +1,6 @@
-package com.example.streamingserviceregioncomparisonapp.ui
+package com.example.msbr.ui
 
+import android.app.Application
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -19,21 +20,41 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.streamingserviceregioncomparisonapp.ui.comparison.CompScreen
-import com.example.streamingserviceregioncomparisonapp.ui.comparison.CompViewModel
-import com.example.streamingserviceregioncomparisonapp.ui.menu.MenuScreen
-import com.example.streamingserviceregioncomparisonapp.ui.menu.MenuViewModel
-import com.example.streamingserviceregioncomparisonapp.ui.settings.SettingsScreen
-import com.example.streamingserviceregioncomparisonapp.ui.settings.SettingsViewModel
+import com.example.msbr.ui.comparison.CompScreen
+import com.example.msbr.ui.comparison.CompViewModel
+import com.example.msbr.ui.comparison.DBViewModel
+import com.example.msbr.ui.comparison.DBViewModelFactory
+import com.example.msbr.ui.menu.MenuScreen
+import com.example.msbr.ui.menu.MenuViewModel
+import com.example.msbr.ui.settings.SettingsScreen
+import com.example.msbr.ui.settings.SettingsViewModel
+
+/****************************************************
+ DATA
+ ****************************************************/
+//Screens enum - used for navigation.
+    enum class Screens {
+        Menu,
+        Settings,
+        Comp
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Comparison(modifier: Modifier = Modifier) {
+    /****************************************************
+    VARIABLES
+     ****************************************************/
+    //establish navigation and viewModels
     val navController: NavHostController = rememberNavController()
     val menuViewModel: MenuViewModel = viewModel()
     val settingsViewModel: SettingsViewModel = viewModel()
     val compViewModel: CompViewModel = viewModel()
+    val dbViewModel: DBViewModel = viewModel(factory = DBViewModelFactory())
 
+    /****************************************************
+    STRUCTURE
+     ****************************************************/
     Scaffold (topBar = {
         TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
@@ -44,9 +65,11 @@ fun Comparison(modifier: Modifier = Modifier) {
                 Text("Streaming Region Comparison")
             },
             actions = {
+                //top app bar home button
                 IconButton(onClick = {navController.navigate(route=Screens.Menu.name)}) {
                     Icon(Icons.Filled.Home, contentDescription = "Return to main menu")
                 }
+                //top app bar settings button
                 IconButton(onClick = {navController.navigate(route=Screens.Settings.name)}) {
                     Icon(Icons.Filled.Settings, contentDescription = "Change App Settings")
                 }
@@ -59,21 +82,19 @@ fun Comparison(modifier: Modifier = Modifier) {
             startDestination = Screens.Menu.name,
             modifier = Modifier.padding(innerPadding)
         ) {
+            //navigate to menu
             composable(route=Screens.Menu.name) {
                 MenuScreen(navController, menuViewModel, compViewModel, modifier)
             }
+            //navigate to settings
             composable(route=Screens.Settings.name) {
                 SettingsScreen(settingsViewModel, modifier)
             }
+            //navigate to comparison screen
             composable(route=Screens.Comp.name) {
-                CompScreen(navController, compViewModel, settingsViewModel, modifier)
+                CompScreen(compViewModel, settingsViewModel, dbViewModel, modifier)
             }
         }
     }
 }
 
-enum class Screens {
-    Menu,
-    Settings,
-    Comp
-}

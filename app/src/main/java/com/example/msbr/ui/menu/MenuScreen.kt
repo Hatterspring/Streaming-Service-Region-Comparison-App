@@ -1,6 +1,5 @@
-package com.example.streamingserviceregioncomparisonapp.ui.menu
+package com.example.msbr.ui.menu
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -13,10 +12,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
-import com.example.streamingserviceregioncomparisonapp.ui.menu.MenuViewModel
-import com.example.streamingserviceregioncomparisonapp.ui.Screens
-import com.example.streamingserviceregioncomparisonapp.ui.comparison.CompViewModel
-import com.example.streamingserviceregioncomparisonapp.ui.comparison.MovieNotFoundException
+import com.example.msbr.ui.Screens
+import com.example.msbr.ui.comparison.CompViewModel
 
 @Composable
 fun MenuScreen(
@@ -25,22 +22,31 @@ fun MenuScreen(
     compViewModel: CompViewModel,
     modifier: Modifier
 ) {
+    /****************************************************
+     VARIABLES
+     ****************************************************/
+    //establish context and movie name state
     var movie by remember {mutableStateOf("")}
     val context = LocalContext.current
+
+    /****************************************************
+     STRUCTURE
+     ****************************************************/
     Column {
         Text("Find where your movie is...")
         TextField(
             label =  {Text("Enter your movie here")},
             value = movie,
             onValueChange = {
+                //collect the name of the movie to search for
                 movie = it
                 viewmodel.updateMovie(movie)
             }
         )
         Button(onClick = {
+            //navigate to comparison screen
             compViewModel.fetchMovieDetails(movie, context)
             navController.navigate(Screens.Comp.name)
         }) { Text("Find!") }
-
     }
 }

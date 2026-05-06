@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Streaming Service Region Comparison App"
+rootProject.name = "Movie Service By Region"
 include(":app")
  

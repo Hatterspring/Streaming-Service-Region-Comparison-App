@@ -1,4 +1,4 @@
-package com.example.streamingserviceregioncomparisonapp
+package com.example.msbr
 
 import org.junit.Test
 

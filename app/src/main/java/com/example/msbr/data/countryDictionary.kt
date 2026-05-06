@@ -1,6 +1,13 @@
-package com.example.streamingserviceregioncomparisonapp.data
+package com.example.msbr.data
 
-import android.util.Log
+/*
+ Country Dictionary
+
+ This is a data file filled with a map of each country
+ name and its corresponding NATO (or similar) country
+ code. Included are helper functions to switch between
+ code and country or country and code.
+ */
 
 val codesToCountries: Map<String, String> = mapOf(
     "AF" to "Afghanistan",

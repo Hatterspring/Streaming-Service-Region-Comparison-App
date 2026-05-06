@@ -4,19 +4,20 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id ("com.google.devtools.ksp")
 }
 
 android {
-    namespace = "com.example.streamingserviceregioncomparisonapp"
+    namespace = "com.example.msbr"
     compileSdk = 36
 
     buildFeatures {
         compose = true
         buildConfig=true
     }
-    
+
     defaultConfig {
-        applicationId = "com.example.streamingserviceregioncomparisonapp"
+        applicationId = "com.example.msbr"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -73,4 +74,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    ksp("androidx.room:room-compiler:2.8.4")
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 }
