@@ -19,17 +19,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     /****************************************************
      VARIABLES
      ****************************************************/
-    //store country is valid boolean in state
-    val _countryIsValid = MutableStateFlow(true)
-    val countryIsValid = _countryIsValid.asStateFlow()
-
     //store permissions granted boolean in state
     private val _permState: MutableStateFlow<Boolean?> = MutableStateFlow(null)
 
     //obtain region name from local storage
     private val regionPrefsMan = RegionPreferenceManager(application)
-    val regionName: LiveData<String> = regionPrefsMan.regionNameFlow
-        .map {it ?: "United Kingdom"}
+    val regionName: LiveData<String?> = regionPrefsMan.regionNameFlow
+        .map {it}
         .asLiveData()
 
     /****************************************************
@@ -42,22 +38,19 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      Outputs:
      * none
      Process:
-     * launch a coroutine
      * save the region name if valid
      * fail if not
      * update the state to reflect whether the country
        was valid or not
+     * return a boolean based on success
      */
-    fun saveRegionName(newName: String) {
-        viewModelScope.launch {
-            try{
-                regionPrefsMan.saveRegionName(newName)
-                _countryIsValid.update { true }
-            } catch (e: DataStoreException) {
-                _countryIsValid.update { false }
-                Log.e("DataStoreException", e.toString())
-            }
-
+    suspend fun saveRegionName(newName: String):Boolean {
+        try{
+            regionPrefsMan.saveRegionName(newName)
+            return true
+        } catch (e: DataStoreException) {
+            Log.e("DataStoreException", e.toString())
+            return false
         }
     }
 

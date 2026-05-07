@@ -42,16 +42,14 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     //collect state from view model
-    val region by settingsViewModel.regionName.observeAsState("United Kingdom")
-    val attempt = settingsViewModel.countryIsValid.collectAsState(true)
+    val region by settingsViewModel.regionName.observeAsState()
 
     //collect other helpful state
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
     //establish state for the current region and updates to it
-    var text by remember { mutableStateOf(region) }
-    var updateCount by remember { mutableIntStateOf(0) }
+    var text by remember {mutableStateOf(region)}
 
     /****************************************************
      FUNCTIONS
@@ -93,28 +91,30 @@ fun SettingsScreen(
         modifier = Modifier
             .padding(all=20.dp)
     ) {
-        Text("Current Region")
+        Text("Current Region: $region")
         TextField(
-            value=text,
+            value=text ?: "",
+            label = {Text("Change Region")},
             onValueChange = {
                 text = it
             }
         )
         Row() {
             Button(onClick={
-                settingsViewModel.saveRegionName(text)
-                updateCount++ //used to trigger LaunchedEffect
-                },
-                modifier = Modifier.padding(end = 5.dp)
-            ) {
-                Text("Save Region")
-                LaunchedEffect(updateCount) {
-                    if (attempt.value){
+
+                coroutineScope.launch {
+                    val success = text?.let { settingsViewModel.saveRegionName(it) } ?: false
+                    if (success){
                         Toast.makeText(context,"Region saved!", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context,"Region not valid. Please enter a valid region.", Toast.LENGTH_LONG).show()
                     }
                 }
+
+                },
+                modifier = Modifier.padding(end = 5.dp)
+            ) {
+                Text("Save Region")
             }
             //Use the current location to save a region
             Button(

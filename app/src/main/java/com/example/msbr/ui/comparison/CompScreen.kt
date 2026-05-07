@@ -3,10 +3,14 @@ package com.example.msbr.ui.comparison
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -17,6 +21,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -69,58 +74,57 @@ fun CompScreen(
     /****************************************************
      STRUCTURE
      ****************************************************/
-    /*
-    movieState[0] = movie ID
-    movieState[1] = movie name
-    movieState[2] = movie description
-    movieState[3] = movie poster url
-    movieState[4] = movie release date
-    movieState[5] = movie rating
-     */
-    Column {
-        Text(
-            text = try {
-                """
+    @Composable
+    fun compScreenPart1() {
+        Column(){
+            Text(
+                text = try {
+                    """
                     ${movieState[1]}
                     ${movieState[2]}
                     release date: ${movieState[4]}
                     rating: ${movieState[5]}
                     ${(movieState[1]) + availableMessage(region, serviceState, typeState)}
                 """.trimIndent()
-            } catch (e: ArrayIndexOutOfBoundsException) {
-                "Movie not found... Please wait or try a different search"
+                } catch (e: ArrayIndexOutOfBoundsException) {
+                    "Movie not found... Please wait or try a different search"
+                }
+            )
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                Button(
+                    onClick={
+                        compViewModel.changeServiceType(CompViewModel.ServiceTypes.BUY)
+                        scope.launch {
+                            serviceListState.animateScrollToItem(0)
+                        }
+                    }
+                ) { Text("buy") }
+                Button(
+                    onClick={
+                        compViewModel.changeServiceType(CompViewModel.ServiceTypes.RENT)
+                        //compViewModel.scrollToTop(0,serviceListState)
+                        scope.launch {
+                            serviceListState.animateScrollToItem(0)
+                        }
+                    }
+                ) { Text("rent") }
+                Button(
+                    onClick={
+                        compViewModel.changeServiceType(CompViewModel.ServiceTypes.STREAM)
+                        scope.launch {
+                            serviceListState.animateScrollToItem(0)
+                        }
+                    }
+                ) { Text("stream") }
             }
-        )
-        Row(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-        ) {
-            Button(
-                onClick={
-                    compViewModel.changeServiceType(CompViewModel.ServiceTypes.BUY)
-                    scope.launch {
-                        serviceListState.animateScrollToItem(0)
-                    }
-                }
-            ) { Text("buy") }
-            Button(
-                onClick={
-                    compViewModel.changeServiceType(CompViewModel.ServiceTypes.RENT)
-                    //compViewModel.scrollToTop(0,serviceListState)
-                    scope.launch {
-                        serviceListState.animateScrollToItem(0)
-                    }
-                }
-            ) { Text("rent") }
-            Button(
-                onClick={
-                    compViewModel.changeServiceType(CompViewModel.ServiceTypes.STREAM)
-                    scope.launch {
-                        serviceListState.animateScrollToItem(0)
-                    }
-                }
-            ) { Text("stream") }
         }
+    }
+
+    @Composable
+    fun compScreenPart2() {
         LazyColumn (
             state = serviceListState,
             userScrollEnabled = true,
@@ -133,7 +137,7 @@ fun CompScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        //.padding(8.dp)
+                    //.padding(8.dp)
                 ) {
                     when (typeState) {
                         CompViewModel.ServiceTypes.BUY -> isButtonVisible = listContent.buy?.isEmpty() == false
@@ -210,19 +214,56 @@ fun CompScreen(
             Text("No streaming services could be found for this movie.")
         }
     }
-    FloatingActionButton(
-        onClick={
-            val sendIntent: Intent = Intent().apply {
-                action = Intent.ACTION_SEND
-                //TODO: change the sharing text so that it displays service information
-                putExtra(Intent.EXTRA_TEXT, "hello this is extra text")
-                type="text/plain"
+    /*
+    movieState[0] = movie ID
+    movieState[1] = movie name
+    movieState[2] = movie description
+    movieState[3] = movie poster url
+    movieState[4] = movie release date
+    movieState[5] = movie rating
+     */
+    BoxWithConstraints (){
+        if (maxWidth < maxHeight) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ){
+                compScreenPart1()
+                compScreenPart2()
             }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Box(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    compScreenPart1()
+                }
 
-            val shareIntent: Intent = Intent.createChooser(sendIntent, null)
-            context.startActivity(shareIntent)
-        },
-    ) { Icon(Icons.Filled.Share, "Share Floating Action Button") }
+                Box(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    compScreenPart2()
+                }
+            }
+        }
+        FloatingActionButton(
+            onClick={
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    //TODO: change the sharing text so that it displays service information
+                    putExtra(Intent.EXTRA_TEXT, "hello this is extra text")
+                    type="text/plain"
+                }
+
+                val shareIntent: Intent = Intent.createChooser(sendIntent, null)
+                context.startActivity(shareIntent)
+            },
+            modifier=Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x=(-10).dp,y=(-10).dp)
+        ) { Icon(Icons.Filled.Share, "Share Floating Action Button") }
+    }
 }
 
 /****************************************************
