@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1039557370529",
+    "project_id": "msbr-ai",
+    "storage_bucket": "msbr-ai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1039557370529:android:1dca1deac75b3f83ad86e0",
+        "android_client_info": {
+          "package_name": "com.lboro.msbr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlHJHBHbE3kdKMfUMJ1TsgwbizaNLjFeg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
