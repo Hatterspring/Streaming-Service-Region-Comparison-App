@@ -3,6 +3,7 @@ package com.lboro.msbr.ui.comparison
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lboro.msbr.BuildConfig
@@ -46,6 +47,9 @@ class CompViewModel() : ViewModel() {
     val _typeState = MutableStateFlow(ServiceTypes.BUY)
     val typeState = _typeState.asStateFlow()
 
+    private val _cachedState = MutableStateFlow(false)
+    val cachedState = _cachedState.asStateFlow()
+
     //api information, courtesy of The Movie Database
     private val apiKey = BuildConfig.API_KEY
     private val accessToken = BuildConfig.ACCESS_TOKEN
@@ -78,17 +82,6 @@ class CompViewModel() : ViewModel() {
                 out += "|$entry"
             }
             return out
-        }
-
-        fun fromString(str: String): ServiceByRegion {
-            var outs = str.split("\n")
-            var buys = outs[0].drop(5).split("|")
-            Log.i("buys", buys.toString())
-            var rents = outs[1].drop(6).split("|")
-            Log.i("rents", rents.toString())
-            var streams = outs[2].drop(8).split("|")
-            Log.i("streams", streams.toString())
-            return ServiceByRegion(buys,rents,streams)
         }
     }
 
@@ -127,10 +120,8 @@ class CompViewModel() : ViewModel() {
      */
     @Throws(MovieNotFoundException::class)
     fun fetchMovieDetails(movie: String, region: String, context: Context) {
-        /*ContextCompat.checkSelfPermission(,
-            Manifest.permission.ACCESS_NETWORK_STATE) != PackageManager.PERMISSION_GRANTED)*/
-
         viewModelScope.launch(Dispatchers.IO) {
+            _cachedState.update{false}
             _movieState.update { arrayOf("") }
             _streamingState.update { mutableMapOf("" to ServiceByRegion())}
             //val sanMovie = URLEncoder.encode(movie, StandardCharsets.UTF_8.toString())
@@ -159,6 +150,7 @@ class CompViewModel() : ViewModel() {
 
     fun fetchCachedMovieDetails(movie: String, dbViewModel: DBViewModel, context:Context) {
         viewModelScope.launch(Dispatchers.IO) {
+            _cachedState.update{true}
             _movieState.update { arrayOf("") }
             _streamingState.update { mutableMapOf("" to ServiceByRegion())}
             try {
@@ -169,9 +161,7 @@ class CompViewModel() : ViewModel() {
                 }
                 _movieState.update({ movieDetails })
                 Log.d("unobserved state", _movieState.value.toString())
-                val streamingDetails: MutableMap<String, ServiceByRegion> = parseServiceInfo(movieDetails[6])/* movieDetails[7].fromString()
-                sortRegionServices(streamingDetails)
-                Log.i("streamingState", _streamingState.value.toString())*/
+                val streamingDetails: MutableMap<String, ServiceByRegion> = parseServiceInfo(movieDetails[6])
                 _streamingState.update {streamingDetails}
             } catch (e: MovieNotFoundException) {
                 withContext(context=Dispatchers.Main){
@@ -445,7 +435,7 @@ class CompViewModel() : ViewModel() {
         return ServiceByRegion(buy,rent,stream)
     }
 
-    override fun toString(): String {
+    fun serviceDetailsToString(): String {
         var out = ""
         _streamingState.value.forEach { region, services ->
             out += "{$region\n${services}"
@@ -453,4 +443,8 @@ class CompViewModel() : ViewModel() {
         Log.i("viewModelToString", out)
         return out
     }
+
+    /*fun mapServiceToURL(movie: String): Map<String, URL> {
+
+    }*/
 }

@@ -19,6 +19,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.lboro.msbr.ui.comparison.CompScreen
 import com.lboro.msbr.ui.comparison.CompViewModel
 import com.lboro.msbr.ui.comparison.DBViewModel
@@ -40,7 +41,7 @@ import com.lboro.msbr.ui.settings.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Comparison(modifier: Modifier = Modifier) {
+fun Comparison(locationClient: FusedLocationProviderClient, modifier: Modifier = Modifier) {
     /****************************************************
     VARIABLES
      ****************************************************/
@@ -87,11 +88,11 @@ fun Comparison(modifier: Modifier = Modifier) {
             }
             //navigate to settings
             composable(route=Screens.Settings.name) {
-                SettingsScreen(settingsViewModel, modifier)
+                SettingsScreen(settingsViewModel, locationClient, modifier)
             }
             //navigate to comparison screen
             composable(route=Screens.Comp.name) {
-                CompScreen(compViewModel, settingsViewModel, dbViewModel, modifier)
+                CompScreen(compViewModel, navController, settingsViewModel, dbViewModel, modifier)
             }
         }
     }

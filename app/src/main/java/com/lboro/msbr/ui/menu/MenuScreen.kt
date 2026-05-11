@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -54,8 +55,8 @@ fun MenuScreen(
      ****************************************************/
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .offset(y=(-100).dp),
+            .fillMaxSize(),
+            //.offset(y=(-100).dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -80,9 +81,13 @@ fun MenuScreen(
             },
             modifier = Modifier.padding(all=10.dp)
         ) { Text("Find!") }
-        Text("Saved Movies: ")
+        if (savedMovies.value.size > 0) {
+            Text("Saved Movies: ")
+        }
         LazyColumn(
-            state = rememberLazyListState()
+            state = rememberLazyListState(),
+            userScrollEnabled = true,
+            modifier = Modifier.height(200.dp)
         ) {
             itemsIndexed(items=savedMovies.value) { index, movie ->
                 Text(

@@ -2,9 +2,17 @@ package com.lboro.msbr
 
 import android.content.ContentResolver
 import android.content.Context
-import androidx.annotation.RequiresApi
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.lboro.msbr.data.provider.MovieInfoContract.Movies.CONTENT_URI
+import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.COLUMN_DESCRIPTION
+import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.COLUMN_ID
+import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.COLUMN_IMAGE
+import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.COLUMN_NAME
+import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.COLUMN_RATING
+import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.COLUMN_RELEASE_DATE
+import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.COLUMN_SERVICE_INFO
+import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.CONTENT_URI
+import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.INVALID_URI
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -15,40 +23,40 @@ class MovieDetailsInstrumentedTest
 {
     private lateinit var context: Context
     private lateinit var resolver: ContentResolver
+
+
+
     @Before
     fun setUp()
     {
-        /*
-        val resolver = context?.contentResolver
-        val mProjection: Array<out String?>?
-        val mSelectionClause: String?
-        val mSelectionArgs: Array<out String>?
-        val mSortOrder: String?
-        val myInsertValues
-        val myUpdateValues*/
-        /*@RequiresApi(Build.VERSION_CODES.O)
-        val cursor = resolver?.query(CONTENT_URI,
-            mProjection, // The columns to return for each row
-            mSelectionClause, // Selection criteria
-            mSelectionArgs, // Selection criteria
-            mSortOrder) // The sort order for the returned rows
-        resolver.insert(CONTENT_URI, myInsertValues)
-        resolver.update(CONTENT_URI, myUpdateValues)
-        resolver.delete(CONTENT_URI)*/
+        context = ApplicationProvider.getApplicationContext()
+        resolver = context.contentResolver
+
     }
     @Test
     fun testQueryAllMovies() {// Test query the movie database
+        resolver.query(CONTENT_URI,
+            arrayOf(COLUMN_ID, COLUMN_NAME, COLUMN_DESCRIPTION, COLUMN_IMAGE, COLUMN_RELEASE_DATE, COLUMN_RATING, COLUMN_SERVICE_INFO), // The columns to return for each row
+            "*", // Selection criteria
+            null, // Selection criteria
+            null)
     }
-    @Test
+    /*@Test
     fun testInsertMovie() { //test insert a movie
+        resolver.insert()
     }
     @Test
     fun testDeleteMovie() { //test delete a movie
-    }
+        resolver.delete()
+    }*/
     @Test(expected = IllegalArgumentException::class
     )
     fun testQueryInvalidUri() {
-
+        resolver.query(INVALID_URI,
+            arrayOf(COLUMN_ID, COLUMN_NAME, COLUMN_DESCRIPTION, COLUMN_IMAGE, COLUMN_RELEASE_DATE, COLUMN_RATING, COLUMN_SERVICE_INFO), // The columns to return for each row
+            "*", // Selection criteria
+            null, // Selection criteria
+            null)
     }
     @After
     fun tearDown() {// clear the database if needed after test

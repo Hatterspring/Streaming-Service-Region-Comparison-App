@@ -2,6 +2,7 @@ package com.lboro.msbr.ui.comparison
 
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -43,8 +44,10 @@ import com.lboro.msbr.data.codeToCountry
 import com.lboro.msbr.data.countryToCode
 import com.lboro.msbr.ui.settings.SettingsViewModel
 import androidx.core.net.toUri
+import androidx.navigation.NavController
 import com.lboro.msbr.data.database.MovieDetailsEntry
 import com.lboro.msbr.gemini.GeminiImpl
+import com.lboro.msbr.ui.Screens
 import kotlinx.coroutines.launch
 import kotlin.collections.containsKey
 import kotlin.collections.get
@@ -53,6 +56,7 @@ import kotlin.collections.get
 @Composable
 fun CompScreen(
     compViewModel: CompViewModel,
+    navController: NavController,
     settingsViewModel: SettingsViewModel,
     dbViewModel: DBViewModel,
     modifier: Modifier
@@ -67,13 +71,13 @@ fun CompScreen(
     val movieState by compViewModel.movieState.collectAsState()
     val serviceState by compViewModel.streamingState.collectAsState()
     val typeState by compViewModel.typeState.collectAsState()
+    val cachedState by compViewModel.cachedState.collectAsState()
 
     //establish state for movie details and service details
     val serviceListState = rememberLazyListState(0)
     val scope = rememberCoroutineScope()
     var showDialog by remember { mutableStateOf(false) }
     var aiResponse by remember {mutableStateOf("loading AI response...")}
-    var availableMessageText by remember {mutableStateOf("")}
 
     //break down the mapping of region to service
     val keys = serviceState.keys.toList()
@@ -152,13 +156,41 @@ fun CompScreen(
             image = movieState[3],
             release_date = movieState[4],
             rating = movieState[5],
-            service_info = compViewModel.toString()
+            service_info = compViewModel.serviceDetailsToString()
         )
     }
 
     /****************************************************
      STRUCTURE
      ****************************************************/
+
+    @Composable
+    fun cacheButton() {
+        when (cachedState) {
+            false ->{
+                Button(onClick = {
+                    scope.launch{
+                        dbViewModel.cacheMovie(saveSearch())
+                        Log.i("cache contents", dbViewModel.getMovieCache().toString())
+                    }
+                }){
+                    Text("Save this search")
+                }
+            }
+            true -> {
+                Button(onClick = {
+                    scope.launch{
+                        dbViewModel.clearCacheOf(movieState[1])
+                        Log.i("cache contents", dbViewModel.getMovieCache().toString())
+                    }
+                    navController.popBackStack()
+                }){
+                    Text("Remove from Cache")
+                }
+            }
+        }
+
+    }
     @Composable
     fun compScreenPart1() {
         Column(){
@@ -175,14 +207,7 @@ fun CompScreen(
                     "Movie not found... Please wait or try a different search"
                 }
             )
-            Button(onClick = {
-                scope.launch{
-                    dbViewModel.cacheMovie(saveSearch())
-                    Log.i("cache contents", dbViewModel.getMovieCache().toString())
-                }
-            }){
-                Text("Save this search")
-            }
+            cacheButton()
             Row(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
@@ -191,6 +216,7 @@ fun CompScreen(
                     onClick={
                         compViewModel.changeServiceType(CompViewModel.ServiceTypes.BUY)
                         scope.launch {
+                            //dbViewModel.updateLinks()
                             serviceListState.animateScrollToItem(0)
                         }
                     }
@@ -214,6 +240,35 @@ fun CompScreen(
                 ) { Text("stream") }
             }
         }
+    }
+
+
+    @Composable
+    fun serviceInformation(item: String) {
+        Text(
+            text = item,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    var url: String? = null
+                    /*scope.launch {
+                        url = dbViewModel.getLink(item)
+                        dbViewModel.seedProviders()
+                        dbViewModel.getAllProviders()
+                        if (url != null) {
+                            Log.i("url", url!!)
+                            val webIntent = Intent(
+                                Intent.ACTION_VIEW,
+                                url!!.toUri()
+                            )
+                            context.startActivity(webIntent)
+                        } else {
+                            Toast.makeText(context, "Could not find link for service!", Toast.LENGTH_SHORT).show()
+                        }
+                    }*/
+
+                }
+        )
     }
 
     @Composable
@@ -251,50 +306,17 @@ fun CompScreen(
                             when(typeState) {
                                 CompViewModel.ServiceTypes.BUY -> {
                                     listContent.buy?.forEach { item ->
-                                        Text(
-                                            text = item,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    val webIntent = Intent(
-                                                        Intent.ACTION_VIEW,
-                                                        "https://www.netflix.com".toUri()
-                                                    )
-                                                    context.startActivity(webIntent)
-                                                }
-                                        )
+                                        serviceInformation(item)
                                     }
                                 }
                                 CompViewModel.ServiceTypes.RENT -> {
                                     listContent.rent?.forEach { item ->
-                                        Text(
-                                            text = item,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    val webIntent = Intent(
-                                                        Intent.ACTION_VIEW,
-                                                        "https://www.netflix.com".toUri()
-                                                    )
-                                                    context.startActivity(webIntent)
-                                                }
-                                        )
+                                        serviceInformation(item)
                                     }
                                 }
                                 CompViewModel.ServiceTypes.STREAM -> {
                                     listContent.stream?.forEach { item ->
-                                        Text(
-                                            text = item,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    val webIntent = Intent(
-                                                        Intent.ACTION_VIEW,
-                                                        "https://www.netflix.com".toUri()
-                                                    )
-                                                    context.startActivity(webIntent)
-                                                }
-                                        )
+                                        serviceInformation(item)
                                     }
                                 }
                             }
@@ -355,6 +377,7 @@ fun CompScreen(
     movieState[3] = movie poster url
     movieState[4] = movie release date
     movieState[5] = movie rating
+    movieState[6] = Enstringified ServiceByRegion (cache only)
      */
     BoxWithConstraints (){
         if (showDialog){
@@ -394,14 +417,11 @@ fun CompScreen(
                 onClick={
                     showDialog = true
                     aiResponse = "loading AI response..."
-                    scope.launch{aiResponse = GeminiImpl().summariseMovieData(compViewModel.toString(),movieState[1],region!!) ?: "could not connect to Gemini..." }
+                    scope.launch{aiResponse = GeminiImpl().summariseMovieData(compViewModel.serviceDetailsToString(),movieState[1],region!!) ?: "could not connect to Gemini..." }
                 }
             ) { Icon(Icons.Filled.Star, "Share Floating Action Button") }
         }
     }
-
-
-
 }
 
 

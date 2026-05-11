@@ -16,6 +16,7 @@ room3Runtime = "3.0.0-alpha03"
 animation = "1.11.0"
 firebaseAi = "17.11.0"
 junitKtx = "1.3.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -40,6 +41,7 @@ androidx-room3-runtime = { group = "androidx.room3", name = "room3-runtime", ver
 androidx-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
 firebase-ai = { group = "com.google.firebase", name = "firebase-ai", version.ref = "firebaseAi" }
 androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

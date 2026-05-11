@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.androidx.animation)
     implementation(libs.firebase.ai)
     implementation(libs.androidx.junit.ktx)
+    implementation(libs.play.services.location)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -11,6 +11,12 @@ interface ProviderDao {
     @Query("SELECT * FROM providers ORDER BY provider_id")
     suspend fun getAll(): List<ProviderEntry>
 
+    @Query("UPDATE providers SET uniform_resource_identifier = :uniform_resource_identifier WHERE name = :name")
+    suspend fun updateLinks(name: String, uniform_resource_identifier: String)
+
+    @Query("SELECT uniform_resource_identifier FROM providers WHERE name LIKE :name")
+    suspend fun getLink(name: String): String?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(provider: ProviderEntry)
 

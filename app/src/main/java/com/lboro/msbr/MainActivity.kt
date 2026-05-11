@@ -7,26 +7,32 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.lboro.msbr.ui.theme.MovieServiceByRegionTheme
 import com.lboro.msbr.ui.Comparison
 
 
 class MainActivity : ComponentActivity() {
 
+    private lateinit var fusedLocClient: FusedLocationProviderClient
+
 
     //TODO: handle app lifecycle
     @Preview(showBackground=true)
     @Composable
     fun ComparisonPreview() {
-        Comparison()
+        Comparison(fusedLocClient)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        fusedLocClient = LocationServices.getFusedLocationProviderClient(this)
         enableEdgeToEdge()
         setContent {
             MovieServiceByRegionTheme {
-                Comparison()
+                Comparison(fusedLocClient)
             }
         }
     }

@@ -68,8 +68,4 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             else -> Log.e("No recognised permission", "Permission not found: $permission")
         }
     }
-
-    fun detectRegion() {
-
-    }
 }
