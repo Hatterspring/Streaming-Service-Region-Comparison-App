@@ -6,6 +6,7 @@ import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
 import com.google.firebase.ai.type.HarmBlockThreshold
 import com.google.firebase.ai.type.HarmCategory
+import com.google.firebase.ai.type.QuotaExceededException
 import com.google.firebase.ai.type.SafetySetting
 import com.google.firebase.ai.type.ServerException
 import com.google.firebase.ai.type.generationConfig
@@ -33,12 +34,16 @@ class GeminiImpl: GeminiRepository {
             )
         )
 
-    override suspend fun summariseMovieData(movieInfo: String, movie: String, region: String): String? {
+
+    override suspend fun summariseMovieData(movieInfo: String, movie: String, region: String): String?
+    {
         val prompt ="""
             You are producing a customer-facing summary of a large amount of data regarding movie services.
             Summarise the following data into:
              - all of the services available for $movie in $region.
              - three other regions, preferably those that offer all three services for $movie. list all services in that region and their type.
+             
+             if the data is empty, the customer probably clicked the button too fast or searched for a movie that doesn't exist. Politely tell them to try again if so.
              
             $movieInfo
         """.trimIndent()
@@ -47,6 +52,9 @@ class GeminiImpl: GeminiRepository {
         } catch (e: ServerException) {
             Log.e("Firebase Server Error", e.toString())
             return null
+        } catch (e: QuotaExceededException) {
+            Log.e("Quota reached", e.toString())
+            return "AI quota reached!"
         }
 
     }

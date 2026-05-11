@@ -1,10 +1,9 @@
 package com.lboro.msbr.ui.comparison
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -13,14 +12,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -46,8 +43,8 @@ import com.lboro.msbr.data.codeToCountry
 import com.lboro.msbr.data.countryToCode
 import com.lboro.msbr.ui.settings.SettingsViewModel
 import androidx.core.net.toUri
+import com.lboro.msbr.data.database.MovieDetailsEntry
 import com.lboro.msbr.gemini.GeminiImpl
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.collections.containsKey
 import kotlin.collections.get
@@ -72,11 +69,11 @@ fun CompScreen(
     val typeState by compViewModel.typeState.collectAsState()
 
     //establish state for movie details and service details
-    val movieListState = rememberLazyListState()
-    val serviceListState = rememberLazyListState()
+    val serviceListState = rememberLazyListState(0)
     val scope = rememberCoroutineScope()
     var showDialog by remember { mutableStateOf(false) }
     var aiResponse by remember {mutableStateOf("loading AI response...")}
+    var availableMessageText by remember {mutableStateOf("")}
 
     //break down the mapping of region to service
     val keys = serviceState.keys.toList()
@@ -84,6 +81,80 @@ fun CompScreen(
 
     //retrieve the region from local storage
     val region by settingsViewModel.regionName.observeAsState()
+
+    /****************************************************
+    FUNCTIONS
+     ****************************************************/
+
+
+    /*
+     Is Available
+     Inputs:
+     * region: String
+     * service: map of region to service by region
+     * type: type of service
+     Outputs:
+     * Boolean
+     Process:
+     * get the country code of the region and check if
+       the corresponding type of service has any matches.
+     */
+    fun isAvailable(): Boolean {
+        val cc = region!!
+        return when (typeState){
+            CompViewModel.ServiceTypes.BUY -> serviceState.containsKey(cc) && !(serviceState[cc]?.buy?.isEmpty() ?: true)
+            CompViewModel.ServiceTypes.RENT -> serviceState.containsKey(cc) && !(serviceState[cc]?.rent?.isEmpty() ?: true)
+            CompViewModel.ServiceTypes.STREAM -> serviceState.containsKey(cc) && !(serviceState[cc]?.stream?.isEmpty() ?: true)
+        }
+    }
+
+    fun availableServices(): String {
+        val cc = region!!
+        var out = ""
+        var i = 0
+        if (serviceState.containsKey(cc) && !(serviceState[cc]?.buy?.isEmpty() ?: true)) {out += "buy,"}
+        if (serviceState.containsKey(cc) && !(serviceState[cc]?.rent?.isEmpty() ?: true)) {out += "rent,"}
+        if (serviceState.containsKey(cc) && !(serviceState[cc]?.stream?.isEmpty() ?: true)) {out += "stream"}
+        return out
+    }
+
+    /*
+         Available Message
+         Inputs:
+         * region: String
+         * service: map of region to service by region
+         * type: type of service
+         Outputs:
+         * String
+         Process:
+         * if the region exists and the service is available,
+           return an affirmative message, otherwise return a
+           negative message
+         */
+    fun availableMessage(movie:String): String {
+        val t = when (typeState) {
+            CompViewModel.ServiceTypes.BUY -> "buy"
+            CompViewModel.ServiceTypes.RENT -> "rent"
+            CompViewModel.ServiceTypes.STREAM -> "stream"
+        }
+        if ((region != null) && isAvailable()) {
+            return "$movie is available to $t in your region!"
+        } else {
+            return "$movie is not available to $t in your region."
+        }
+    }
+
+    fun saveSearch(): MovieDetailsEntry {
+        return MovieDetailsEntry(
+            movie_id = movieState[0],
+            name = movieState[1],
+            description = movieState[2],
+            image = movieState[3],
+            release_date = movieState[4],
+            rating = movieState[5],
+            service_info = compViewModel.toString()
+        )
+    }
 
     /****************************************************
      STRUCTURE
@@ -98,12 +169,20 @@ fun CompScreen(
                     ${movieState[2]}
                     release date: ${movieState[4]}
                     rating: ${movieState[5]}
-                    ${(movieState[1]) + availableMessage(region, serviceState, typeState)}
+                    ${availableMessage(movieState[1])}
                 """.trimIndent()
                 } catch (e: ArrayIndexOutOfBoundsException) {
                     "Movie not found... Please wait or try a different search"
                 }
             )
+            Button(onClick = {
+                scope.launch{
+                    dbViewModel.cacheMovie(saveSearch())
+                    Log.i("cache contents", dbViewModel.getMovieCache().toString())
+                }
+            }){
+                Text("Save this search")
+            }
             Row(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
@@ -164,7 +243,7 @@ fun CompScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
-                            Text(codeToCountry(keys[index]) ?: "")
+                            Text(keys[index])
                         }
                     }
                     AnimatedVisibility(expanded) {
@@ -305,68 +384,29 @@ fun CompScreen(
                 }
             }
         }
-        FloatingActionButton(
-            onClick={
-                showDialog = true
-                aiResponse = "loading AI response..."
-                scope.launch{aiResponse = GeminiImpl().summariseMovieData(compViewModel.toString(),movieState[1],region!!) ?: "could not connect to Gemini..." }
-            },
-            modifier=Modifier
+        AnimatedVisibility(
+            !serviceState.isEmpty(),
+            modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .offset(x=(-10).dp,y=(-10).dp)
-        ) { Icon(Icons.Filled.Star, "Share Floating Action Button") }
+        ) {
+            FloatingActionButton(
+                onClick={
+                    showDialog = true
+                    aiResponse = "loading AI response..."
+                    scope.launch{aiResponse = GeminiImpl().summariseMovieData(compViewModel.toString(),movieState[1],region!!) ?: "could not connect to Gemini..." }
+                }
+            ) { Icon(Icons.Filled.Star, "Share Floating Action Button") }
+        }
     }
 
-    
+
+
 }
 
-/****************************************************
- FUNCTIONS
- ****************************************************/
-/*
-     Available Message
-     Inputs:
-     * region: String
-     * service: map of region to service by region
-     * type: type of service
-     Outputs:
-     * String
-     Process:
-     * if the region exists and the service is available,
-       return an affirmative message, otherwise return a
-       negative message
-     */
-fun availableMessage(region: String?, service: Map<String, CompViewModel.ServiceByRegion>, type: CompViewModel.ServiceTypes): String {
-    val t = when (type){
-        CompViewModel.ServiceTypes.BUY -> "buy"
-        CompViewModel.ServiceTypes.RENT -> "rent"
-        CompViewModel.ServiceTypes.STREAM -> "stream"
-    }
-    if (!(region?.isEmpty() ?: true) && isAvailable(region, service, type)) {
-        return " is available to $t in your region!"
-    } else {
-        return " is not available to $t in your region."
-    }
-}
 
-/*
-     Is Available
-     Inputs:
-     * region: String
-     * service: map of region to service by region
-     * type: type of service
-     Outputs:
-     * Boolean
-     Process:
-     * get the country code of the region and check if
-       the corresponding type of service has any matches.
-     */
-fun isAvailable(region: String, service: Map<String, CompViewModel.ServiceByRegion>, type: CompViewModel.ServiceTypes): Boolean {
-    val cc = countryToCode(region)
-    return when (type){
-        CompViewModel.ServiceTypes.BUY -> service.containsKey(cc) && !(service[cc]?.buy?.isEmpty() ?: true)
-        CompViewModel.ServiceTypes.RENT -> service.containsKey(cc) && !(service[cc]?.rent?.isEmpty() ?: true)
-        CompViewModel.ServiceTypes.STREAM -> service.containsKey(cc) && !(service[cc]?.stream?.isEmpty() ?: true)
-    }
-}
+
+
+
+
 

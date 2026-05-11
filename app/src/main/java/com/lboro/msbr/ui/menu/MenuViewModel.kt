@@ -1,9 +1,12 @@
 package com.lboro.msbr.ui.menu
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.lboro.msbr.ui.comparison.DBViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class MenuViewModel : ViewModel() {
     /****************************************************
@@ -13,6 +16,9 @@ class MenuViewModel : ViewModel() {
     //movieState: keep track of the movie name
     private val _movieState = MutableStateFlow("")
     val movieState = _movieState.asStateFlow()
+
+    private val _cachedMovieState: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
+    val cachedMovieState = _cachedMovieState.asStateFlow()
 
     /****************************************************
      FUNCTIONS
@@ -29,5 +35,12 @@ class MenuViewModel : ViewModel() {
      */
     fun updateMovie(movie: String){
         _movieState.update({ movie })
+    }
+
+    fun getMovieCache(dbViewModel: DBViewModel) {
+        viewModelScope.launch {
+            //dbViewModel.clearCache()
+            _cachedMovieState.update{dbViewModel.getMovieNames()}
+        }
     }
 }

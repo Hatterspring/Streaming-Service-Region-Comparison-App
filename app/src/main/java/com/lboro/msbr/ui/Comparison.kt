@@ -83,7 +83,7 @@ fun Comparison(modifier: Modifier = Modifier) {
         ) {
             //navigate to menu
             composable(route=Screens.Menu.name) {
-                MenuScreen(navController, menuViewModel, compViewModel, modifier)
+                MenuScreen(navController, menuViewModel, compViewModel, settingsViewModel, dbViewModel, modifier)
             }
             //navigate to settings
             composable(route=Screens.Settings.name) {

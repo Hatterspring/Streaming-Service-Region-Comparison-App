@@ -19,7 +19,10 @@ class DBViewModel(application: Application): AndroidViewModel(application) {
     private val context: Context
         get() = getApplication()
 
-    private val db = Room.databaseBuilder(context, CompDatabase::class.java, DB_NAME).build()
+    private val db = Room.databaseBuilder(context, CompDatabase::class.java, DB_NAME)
+        .fallbackToDestructiveMigration(false)
+        //.addMigrations()
+        .build()
 
 
     /****************************************************
@@ -36,8 +39,23 @@ class DBViewModel(application: Application): AndroidViewModel(application) {
     /****************************************************
      CACHE
      ****************************************************/
+    suspend fun cacheMovie(movieDetailsEntry: MovieDetailsEntry) {
+        db.movieDetailsDao().insert(movieDetailsEntry)
+    }
     suspend fun getMovieCache(): List<MovieDetailsEntry> {
         return db.movieDetailsDao().getAll()
+    }
+
+    suspend fun getMovieNames(): List<String> {
+        return db.movieDetailsDao().getMovieNames()
+    }
+
+    suspend fun getMovie(movie: String): Array<MovieDetailsEntry>? {
+        return db.movieDetailsDao().getMovie(movie)
+    }
+
+    suspend fun clearCache() {
+        db.movieDetailsDao().clearCache()
     }
 }
 

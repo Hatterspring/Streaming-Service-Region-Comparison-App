@@ -12,6 +12,5 @@ data class MovieDetailsEntry (
     @ColumnInfo(name = "image") val image: String,
     @ColumnInfo(name = "release_date") val release_date: String,
     @ColumnInfo(name = "rating") val rating: String,
-    @ColumnInfo(name = "available") val available: Boolean,
     @ColumnInfo(name = "service_info") val service_info: String,
 )
