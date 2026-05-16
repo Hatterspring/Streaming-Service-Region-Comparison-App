@@ -1,15 +1,15 @@
 package com.lboro.msbr.ui.comparison
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.runtime.mutableStateOf
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lboro.msbr.BuildConfig
 import com.lboro.msbr.data.codeToCountry
-import com.lboro.msbr.data.countryToCode
-import com.lboro.msbr.data.database.MovieDetailsDao
+import com.lboro.msbr.data.database.MovieDetailsEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,8 +26,6 @@ import java.io.InputStreamReader
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationStrategy
-import kotlinx.serialization.json.Json
 
 class CompViewModel() : ViewModel() {
     /****************************************************
@@ -39,8 +37,8 @@ class CompViewModel() : ViewModel() {
 
     //streamingState: keep track of the services that can
     //buy, rent or stream the movie for each region
-    private val _streamingState = MutableStateFlow(mutableMapOf("" to ServiceByRegion(null, null, null)))
-    val streamingState = _streamingState.asStateFlow()
+    private val _serviceState = MutableStateFlow(mutableMapOf("" to ServiceByRegion(null, null, null)))
+    val serviceState = _serviceState.asStateFlow()
 
     //typeState: keep track of whether the movie should be
     //bought, rented or streamed.
@@ -123,7 +121,7 @@ class CompViewModel() : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             _cachedState.update{false}
             _movieState.update { arrayOf("") }
-            _streamingState.update { mutableMapOf("" to ServiceByRegion())}
+            _serviceState.update { mutableMapOf("" to ServiceByRegion())}
             //val sanMovie = URLEncoder.encode(movie, StandardCharsets.UTF_8.toString())
             val movieJSON = getJSONFromApi(baseUrl+"search/movie?query=$movie")
             try {
@@ -137,7 +135,7 @@ class CompViewModel() : ViewModel() {
                 val streamingJSON = getJSONFromApi(baseUrl+"movie/$id/watch/providers")
                 val streamingDetails = parseServiceInfoJSON(streamingJSON)
                 sortRegionServices(region, streamingDetails)
-                Log.i("streamingState", _streamingState.value.toString())
+                Log.i("streamingState", _serviceState.value.toString())
             } catch (e: MovieNotFoundException) {
                 withContext(context=Dispatchers.Main){
                     Toast.makeText(context, e.message.toString(), Toast.LENGTH_SHORT).show()
@@ -148,21 +146,18 @@ class CompViewModel() : ViewModel() {
         }
     }
 
-    fun fetchCachedMovieDetails(movie: String, dbViewModel: DBViewModel, context:Context) {
+    fun fetchCachedMovieDetails(movieCache: List<MovieDetailsEntry>?, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             _cachedState.update{true}
             _movieState.update { arrayOf("") }
-            _streamingState.update { mutableMapOf("" to ServiceByRegion())}
+            _serviceState.update { mutableMapOf("" to ServiceByRegion())}
             try {
-                val movieDetails = queryCache(dbViewModel, movie)!!
+                val movieDetails = parseCache(movieCache)!!
                 val id = movieDetails[0]
-                if ("Network Error! Please check the network connection!" in id) { //change to sql error
-                    throw MovieNotFoundException(id)
-                }
                 _movieState.update({ movieDetails })
                 Log.d("unobserved state", _movieState.value.toString())
                 val streamingDetails: MutableMap<String, ServiceByRegion> = parseServiceInfo(movieDetails[6])
-                _streamingState.update {streamingDetails}
+                _serviceState.update {streamingDetails}
             } catch (e: MovieNotFoundException) {
                 withContext(context=Dispatchers.Main){
                     Toast.makeText(context, e.message.toString(), Toast.LENGTH_SHORT).show()
@@ -173,8 +168,24 @@ class CompViewModel() : ViewModel() {
         }
     }
 
-    suspend fun queryCache(dbvm: DBViewModel, movie:String): Array<String>? {
-        val out = dbvm.getMovie(movie)?.get(0)
+    fun fetchProviderLink(context: Context) {
+        var providerUrl = "https://www.themoviedb.org/movie/${_movieState.value[0]}".toUri()
+        viewModelScope.launch {
+            if (providerUrl != null) {
+                Log.i("providerUrl", providerUrl.toString())
+                val webIntent = Intent(
+                    Intent.ACTION_VIEW,
+                    providerUrl
+                )
+                context.startActivity(webIntent)
+            } else {
+                Toast.makeText(context, "Could not find link for service!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun parseCache(cache: List<MovieDetailsEntry>?): Array<String>? {
+        var out = cache?.get(0)
         if (out != null) {
             return arrayOf(
                 out.movie_id,
@@ -330,10 +341,10 @@ class CompViewModel() : ViewModel() {
         val id = dataObject.getString("id")
         val title = dataObject.getString("title")
         val overview = dataObject.getString("overview")
-        val backdrop = dataObject.getString("backdrop_path")
+        val poster = "https://image.tmdb.org/t/p/w500/${dataObject.getString("poster_path")}"
         val releasedate = dataObject.getString("release_date")
         val voteav = dataObject.getString("vote_average")
-        return arrayOf(id, title, overview, backdrop, releasedate, voteav)
+        return arrayOf(id, title, overview, poster, releasedate, voteav)
     }
 
     /*
@@ -362,7 +373,7 @@ class CompViewModel() : ViewModel() {
         return out
     }
 
-    suspend fun sortRegionServices(region: String, map: MutableMap<String, ServiceByRegion>) {
+    fun sortRegionServices(region: String, map: MutableMap<String, ServiceByRegion>) {
         val out = map.toSortedMap()
         val current = out.get(region)
         out.remove(region)
@@ -373,9 +384,9 @@ class CompViewModel() : ViewModel() {
                 out.forEach { key, value ->
                     newMap.put(key, value)
                 }
-                _streamingState.update { newMap }
+                _serviceState.update { newMap }
             } else {
-                _streamingState.update { map }
+                _serviceState.update { map }
             }
             }
     }
@@ -383,7 +394,7 @@ class CompViewModel() : ViewModel() {
     suspend fun sortRegionServices(map: MutableMap<String, ServiceByRegion>) {
         val out = map.toSortedMap()
         viewModelScope.launch {
-            _streamingState.update { out }
+            _serviceState.update { out }
         }
     }
 
@@ -409,7 +420,7 @@ class CompViewModel() : ViewModel() {
         try {
             val buyArray: JSONArray = region.getJSONArray("buy")
             for (x in 0 until (buyArray.length())) {
-                buy?.add(buyArray.getJSONObject(x)?.get("provider_name").toString())
+                buy?.add("${buyArray.getJSONObject(x)?.get("logo_path").toString()}:${buyArray.getJSONObject(x)?.get("provider_name").toString()}")
             }
         } catch (e: JSONException) {
             Log.e("No buy section", e.toString())
@@ -418,7 +429,8 @@ class CompViewModel() : ViewModel() {
         try {
             val rentArray: JSONArray = region.getJSONArray("rent")
             for (y in 0 until (rentArray.length())) {
-                rent?.add(rentArray.getJSONObject(y)?.get("provider_name").toString())
+
+                rent?.add("${rentArray.getJSONObject(y)?.get("logo_path").toString()}:${rentArray.getJSONObject(y)?.get("provider_name").toString()}")
             }
         } catch (e: JSONException) {
             Log.e("No rent section", e.toString())
@@ -426,7 +438,7 @@ class CompViewModel() : ViewModel() {
         try {
             val streamArray: JSONArray = region.getJSONArray("flatrate")
             for (z in 0 until (streamArray.length())) {
-                stream?.add(streamArray.getJSONObject(z).get("provider_name").toString())
+                stream?.add("${streamArray.getJSONObject(z)?.get("logo_path").toString()}:${streamArray.getJSONObject(z)?.get("provider_name").toString()}")
             }
         } catch (e: JSONException) {
             Log.e("No streaming section", e.toString())
@@ -437,11 +449,37 @@ class CompViewModel() : ViewModel() {
 
     fun serviceDetailsToString(): String {
         var out = ""
-        _streamingState.value.forEach { region, services ->
+        _serviceState.value.forEach { region, services ->
             out += "{$region\n${services}"
         }
         Log.i("viewModelToString", out)
         return out
+    }
+
+    fun isAvailable(region: String): Boolean {
+        val ss = serviceState.value
+        return when (_typeState.value){
+            ServiceTypes.BUY -> ss.containsKey(region) && !(ss[region]?.buy?.isEmpty() ?: true)
+            ServiceTypes.RENT -> ss.containsKey(region) && !(ss[region]?.rent?.isEmpty() ?: true)
+            ServiceTypes.STREAM -> ss.containsKey(region) && !(ss[region]?.stream?.isEmpty() ?: true)
+        }
+    }
+
+    fun saveSearch(): MovieDetailsEntry {
+        val ms = _movieState.value
+        return MovieDetailsEntry(
+            movie_id = ms[0],
+            name = ms[1],
+            description = ms[2],
+            image = ms[3],
+            release_date = ms[4],
+            rating = ms[5],
+            service_info = serviceDetailsToString()
+        )
+    }
+
+    fun goToProvider(name: String) {
+
     }
 
     /*fun mapServiceToURL(movie: String): Map<String, URL> {

@@ -31,12 +31,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.lboro.msbr.ui.DataViewModel
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
-    settingsViewModel: SettingsViewModel = viewModel(),
+    dataViewModel: DataViewModel,
     locationClient: FusedLocationProviderClient,
     modifier: Modifier
 ) {
@@ -47,7 +48,7 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     //collect state from view model
-    val region by settingsViewModel.regionName.observeAsState()
+    val region by dataViewModel.regionName.observeAsState()
 
     //collect other helpful state
     val coroutineScope = rememberCoroutineScope()
@@ -90,7 +91,6 @@ fun SettingsScreen(
     fun getLocation() {
         locationClient.getLastLocation()
             .addOnSuccessListener{ loc ->
-
                 if (loc != null) {
                     Log.i("location information", loc.toString())
                     val lat = loc.latitude
@@ -101,7 +101,7 @@ fun SettingsScreen(
                         coroutineScope.launch {
                             var success: Boolean
                             try {
-                                success = text?.let { settingsViewModel.saveRegionName(it) } ?: false
+                                success = text?.let { dataViewModel.saveRegionName(it) } ?: false
                             } catch (e: NullPointerException) {
                                 success = false
                             }
@@ -118,11 +118,7 @@ fun SettingsScreen(
                     Toast.makeText(context,"Unable to find location. Please enter a region.", Toast.LENGTH_LONG).show()
                     Log.i("region saved", "no")
                 }
-
-
             }
-
-
     }
 
 
@@ -145,7 +141,7 @@ fun SettingsScreen(
             Button(onClick={
 
                 coroutineScope.launch {
-                    val success = text?.let { settingsViewModel.saveRegionName(it) } ?: false
+                    val success = text?.let { dataViewModel.saveRegionName(it) } ?: false
                     if (success){
                         Toast.makeText(context,"Region saved!", Toast.LENGTH_SHORT).show()
                     } else {
@@ -162,7 +158,7 @@ fun SettingsScreen(
             Button(
                 onClick = {
                     if (ContextCompat.checkSelfPermission(context, ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        settingsViewModel.onPermissionChange(ACCESS_COARSE_LOCATION, hasPermission(ACCESS_COARSE_LOCATION))
+                        dataViewModel.onPermissionChange(ACCESS_COARSE_LOCATION, hasPermission(ACCESS_COARSE_LOCATION))
                         getLocation()
                     } else {
                         coroutineScope.launch {
@@ -175,13 +171,5 @@ fun SettingsScreen(
                 Text("Use Last Location")
             }
         }
-
-
-
-
-        //wip
-        Text("Background colour: ")
-        Text("Foreground colour: ")
-
     }
 }

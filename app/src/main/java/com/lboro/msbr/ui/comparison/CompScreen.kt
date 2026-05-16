@@ -2,7 +2,6 @@ package com.lboro.msbr.ui.comparison
 
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -24,10 +23,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,25 +37,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.lboro.msbr.data.codeToCountry
-import com.lboro.msbr.data.countryToCode
-import com.lboro.msbr.ui.settings.SettingsViewModel
-import androidx.core.net.toUri
 import androidx.navigation.NavController
-import com.lboro.msbr.data.database.MovieDetailsEntry
+import coil.compose.AsyncImage
 import com.lboro.msbr.gemini.GeminiImpl
-import com.lboro.msbr.ui.Screens
+import com.lboro.msbr.ui.DataViewModel
 import kotlinx.coroutines.launch
-import kotlin.collections.containsKey
-import kotlin.collections.get
-
 
 @Composable
 fun CompScreen(
     compViewModel: CompViewModel,
     navController: NavController,
-    settingsViewModel: SettingsViewModel,
-    dbViewModel: DBViewModel,
+    dataViewModel: DataViewModel,
     modifier: Modifier
 ) {
     /****************************************************
@@ -69,7 +58,7 @@ fun CompScreen(
 
     //collect state
     val movieState by compViewModel.movieState.collectAsState()
-    val serviceState by compViewModel.streamingState.collectAsState()
+    val serviceState by compViewModel.serviceState.collectAsState()
     val typeState by compViewModel.typeState.collectAsState()
     val cachedState by compViewModel.cachedState.collectAsState()
 
@@ -84,80 +73,29 @@ fun CompScreen(
     val vals = serviceState.values.toList()
 
     //retrieve the region from local storage
-    val region by settingsViewModel.regionName.observeAsState()
+    val region by dataViewModel.regionName.observeAsState()
 
     /****************************************************
     FUNCTIONS
      ****************************************************/
 
-
-    /*
-     Is Available
-     Inputs:
-     * region: String
-     * service: map of region to service by region
-     * type: type of service
-     Outputs:
-     * Boolean
-     Process:
-     * get the country code of the region and check if
-       the corresponding type of service has any matches.
+    /**
+     * Available Message - if the region exists and the service is available,
+     * return an affirmative message otherwise return a negative message
+     * String movie The name of the movie
+     * Returns string
      */
-    fun isAvailable(): Boolean {
-        val cc = region!!
-        return when (typeState){
-            CompViewModel.ServiceTypes.BUY -> serviceState.containsKey(cc) && !(serviceState[cc]?.buy?.isEmpty() ?: true)
-            CompViewModel.ServiceTypes.RENT -> serviceState.containsKey(cc) && !(serviceState[cc]?.rent?.isEmpty() ?: true)
-            CompViewModel.ServiceTypes.STREAM -> serviceState.containsKey(cc) && !(serviceState[cc]?.stream?.isEmpty() ?: true)
-        }
-    }
-
-    fun availableServices(): String {
-        val cc = region!!
-        var out = ""
-        var i = 0
-        if (serviceState.containsKey(cc) && !(serviceState[cc]?.buy?.isEmpty() ?: true)) {out += "buy,"}
-        if (serviceState.containsKey(cc) && !(serviceState[cc]?.rent?.isEmpty() ?: true)) {out += "rent,"}
-        if (serviceState.containsKey(cc) && !(serviceState[cc]?.stream?.isEmpty() ?: true)) {out += "stream"}
-        return out
-    }
-
-    /*
-         Available Message
-         Inputs:
-         * region: String
-         * service: map of region to service by region
-         * type: type of service
-         Outputs:
-         * String
-         Process:
-         * if the region exists and the service is available,
-           return an affirmative message, otherwise return a
-           negative message
-         */
     fun availableMessage(movie:String): String {
         val t = when (typeState) {
             CompViewModel.ServiceTypes.BUY -> "buy"
             CompViewModel.ServiceTypes.RENT -> "rent"
             CompViewModel.ServiceTypes.STREAM -> "stream"
         }
-        if ((region != null) && isAvailable()) {
+        if ((region != null) && compViewModel.isAvailable(region!!)) {
             return "$movie is available to $t in your region!"
         } else {
             return "$movie is not available to $t in your region."
         }
-    }
-
-    fun saveSearch(): MovieDetailsEntry {
-        return MovieDetailsEntry(
-            movie_id = movieState[0],
-            name = movieState[1],
-            description = movieState[2],
-            image = movieState[3],
-            release_date = movieState[4],
-            rating = movieState[5],
-            service_info = compViewModel.serviceDetailsToString()
-        )
     }
 
     /****************************************************
@@ -170,8 +108,8 @@ fun CompScreen(
             false ->{
                 Button(onClick = {
                     scope.launch{
-                        dbViewModel.cacheMovie(saveSearch())
-                        Log.i("cache contents", dbViewModel.getMovieCache().toString())
+                        dataViewModel.cacheMovie(compViewModel.saveSearch())
+                        Log.i("cache contents", dataViewModel.getMovieCache().toString())
                     }
                 }){
                     Text("Save this search")
@@ -180,8 +118,8 @@ fun CompScreen(
             true -> {
                 Button(onClick = {
                     scope.launch{
-                        dbViewModel.clearCacheOf(movieState[1])
-                        Log.i("cache contents", dbViewModel.getMovieCache().toString())
+                        dataViewModel.clearCacheOf(movieState[1])
+                        Log.i("cache contents", dataViewModel.getMovieCache().toString())
                     }
                     navController.popBackStack()
                 }){
@@ -191,9 +129,43 @@ fun CompScreen(
         }
 
     }
+
     @Composable
-    fun compScreenPart1() {
+    fun serviceInformation(item: String) {
+        val providerArray = item.split(":")
+        if (providerArray[0] != "") {
+            AsyncImage(
+                model= "https://media.themoviedb.org/t/p/original/${providerArray[0]}",
+                contentDescription="logo",
+                modifier = Modifier.clickable {
+                    compViewModel.fetchProviderLink(context)
+                }
+            )
+        } else {
+            Text(
+                text = providerArray[1],
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        compViewModel.fetchProviderLink(context)
+                    }
+            )
+        }
+
+    }
+
+    /**
+     * display information about the searched movie, as well as buttons
+     * to save this search, preventing a future unnecessary API call and
+     * to change between buying, renting and streaming information.
+     */
+    @Composable
+    fun movieDetailsComponent() {
         Column(){
+            AsyncImage(
+                model=try{movieState[3]} catch (e: ArrayIndexOutOfBoundsException) {""},
+                contentDescription = "Movie Poster"
+            )
             Text(
                 text = try {
                     """
@@ -242,37 +214,12 @@ fun CompScreen(
         }
     }
 
-
+    /**
+     * List all countries that offer a service for the given movie,
+     * expand into a country's services when clicked.
+     */
     @Composable
-    fun serviceInformation(item: String) {
-        Text(
-            text = item,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    var url: String? = null
-                    /*scope.launch {
-                        url = dbViewModel.getLink(item)
-                        dbViewModel.seedProviders()
-                        dbViewModel.getAllProviders()
-                        if (url != null) {
-                            Log.i("url", url!!)
-                            val webIntent = Intent(
-                                Intent.ACTION_VIEW,
-                                url!!.toUri()
-                            )
-                            context.startActivity(webIntent)
-                        } else {
-                            Toast.makeText(context, "Could not find link for service!", Toast.LENGTH_SHORT).show()
-                        }
-                    }*/
-
-                }
-        )
-    }
-
-    @Composable
-    fun compScreenPart2() {
+    fun serviceInfoComponent() {
         LazyColumn (
             state = serviceListState,
             userScrollEnabled = true,
@@ -329,6 +276,8 @@ fun CompScreen(
             Text("No streaming services could be found for this movie.")
         }
     }
+
+
 
     @Composable
     fun aiDialog() {
@@ -387,8 +336,8 @@ fun CompScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ){
-                compScreenPart1()
-                compScreenPart2()
+                movieDetailsComponent()
+                serviceInfoComponent()
             }
         } else {
             Row(
@@ -397,13 +346,13 @@ fun CompScreen(
                 Box(
                     modifier = Modifier.weight(1f)
                 ) {
-                    compScreenPart1()
+                    movieDetailsComponent()
                 }
 
                 Box(
                     modifier = Modifier.weight(1f)
                 ) {
-                    compScreenPart2()
+                    serviceInfoComponent()
                 }
             }
         }

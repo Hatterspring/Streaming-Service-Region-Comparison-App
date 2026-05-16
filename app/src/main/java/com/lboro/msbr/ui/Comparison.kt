@@ -22,12 +22,9 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.lboro.msbr.ui.comparison.CompScreen
 import com.lboro.msbr.ui.comparison.CompViewModel
-import com.lboro.msbr.ui.comparison.DBViewModel
-import com.lboro.msbr.ui.comparison.DBViewModelFactory
 import com.lboro.msbr.ui.menu.MenuScreen
 import com.lboro.msbr.ui.menu.MenuViewModel
 import com.lboro.msbr.ui.settings.SettingsScreen
-import com.lboro.msbr.ui.settings.SettingsViewModel
 
 /****************************************************
  DATA
@@ -48,9 +45,8 @@ fun Comparison(locationClient: FusedLocationProviderClient, modifier: Modifier =
     //establish navigation and viewModels
     val navController: NavHostController = rememberNavController()
     val menuViewModel: MenuViewModel = viewModel()
-    val settingsViewModel: SettingsViewModel = viewModel()
+    val dataViewModel: DataViewModel = viewModel(factory = DataViewModelFactory())
     val compViewModel: CompViewModel = viewModel()
-    val dbViewModel: DBViewModel = viewModel(factory = DBViewModelFactory())
 
     /****************************************************
     STRUCTURE
@@ -84,15 +80,15 @@ fun Comparison(locationClient: FusedLocationProviderClient, modifier: Modifier =
         ) {
             //navigate to menu
             composable(route=Screens.Menu.name) {
-                MenuScreen(navController, menuViewModel, compViewModel, settingsViewModel, dbViewModel, modifier)
+                MenuScreen(navController, menuViewModel, compViewModel, dataViewModel, modifier)
             }
             //navigate to settings
             composable(route=Screens.Settings.name) {
-                SettingsScreen(settingsViewModel, locationClient, modifier)
+                SettingsScreen(dataViewModel, locationClient, modifier)
             }
             //navigate to comparison screen
             composable(route=Screens.Comp.name) {
-                CompScreen(compViewModel, navController, settingsViewModel, dbViewModel, modifier)
+                CompScreen(compViewModel, navController, dataViewModel, modifier)
             }
         }
     }

@@ -17,8 +17,6 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var fusedLocClient: FusedLocationProviderClient
 
-
-    //TODO: handle app lifecycle
     @Preview(showBackground=true)
     @Composable
     fun ComparisonPreview() {

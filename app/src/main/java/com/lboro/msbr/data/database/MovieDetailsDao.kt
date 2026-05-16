@@ -13,7 +13,7 @@ interface MovieDetailsDao {
     suspend fun getAll(): List<MovieDetailsEntry>
 
     @Query("SELECT * FROM movie_details WHERE name = :movie")
-    suspend fun getMovie(movie: String): Array<MovieDetailsEntry>?
+    suspend fun getMovie(movie: String): List<MovieDetailsEntry>
 
     @Query("SELECT name FROM movie_details")
     suspend fun getMovieNames(): List<String>
