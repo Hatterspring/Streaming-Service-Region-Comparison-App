@@ -28,18 +28,10 @@ interface MovieDetailsDao {
     suspend fun delete(movie: String)
 
     //for the use of ContentProvider
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertMovieDetails(movieDetails: MovieDetailsEntry):Long
-
-    @Delete
-    fun deleteMovieDetails(movieDetails: MovieDetailsEntry): Int
 
     @Query("SELECT * FROM movie_details")
     fun getAllMovieDetailsCursor(): Cursor
 
     @Query("SELECT * from movie_details WHERE movie_id = :id")
-    fun getMovieDetailsItemCursor(id: String): Cursor
-
-    @Query("DELETE FROM movie_details")
-    fun clearData()
+    fun getMovieDetailsItemCursor(id: String?): Cursor
 }

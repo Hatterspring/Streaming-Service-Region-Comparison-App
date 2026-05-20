@@ -6,8 +6,6 @@ import android.content.ContentValues
 import android.content.UriMatcher
 import android.database.Cursor
 import android.net.Uri
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.lboro.msbr.data.database.CompDatabase
 import com.lboro.msbr.data.database.MovieDetailsDao
 import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.COLUMN_ID
@@ -76,51 +74,23 @@ class MovieInfoProvider: ContentProvider() {
         selection: String?,
         selectionArgs: Array<out String?>?
     ): Int {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("Update operation is not supported")
     }
 
     override fun getType(uri: Uri): String? {
-        return null /*when (uriMatcher.match(uri)) {
-            MOVIES -> MovieInfoContract.Movies.CONTENT_TYPE
-            MOVIE_ID -> MovieInfoContract.Movies.CONTENT_ITEM_TYPE
+        return when (uriMatcher.match(uri)) {
+            MOVIE_DETAILS -> MovieDetails.CONTENT_TYPE
+            MOVIE_ID -> MovieDetails.CONTENT_ITEM_TYPE
             else -> throw IllegalArgumentException("Unknown URI: $uri")
-        }*/
+        }
     }
 
     override fun insert(
         uri: Uri,
         values: ContentValues?
     ): Uri? {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("Update operation is not supported")
     }
-
-    /*override fun query(
-        uri: Uri,
-        projection: Array<out String?>?,
-        selection: String?,
-        selectionArgs: Array<out String?>?,
-        sortOrder: String?
-    ): Cursor? {
-        TODO("Not yet implemented")
-    }*/
-
-    /*
-    val resolver = context?.contentResolver
-    val mProjection: Array<out String?>?
-    val mSelectionClause: String?
-    val mSelectionArgs: Array<out String>?
-    val mSortOrder: String?
-
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    val cursor = resolver?.query(CONTENT_URI,
-        mProjection, // The columns to return for each row
-        mSelectionClause, // Selection criteria
-        mSelectionArgs, // Selection criteria
-        mSortOrder) // The sort order for the returned rows
-    resolver.insert(CONTENT_URI, myInsertValues)
-    resolver.update(CONTENT_URI, myUpdateValues)
-    resolver.delete(CONTENT_URI)*/
 
     val resolver = context?.contentResolver
     val mProjection: Array<String>? = arrayOf(COLUMN_ID, COLUMN_NAME)
@@ -134,8 +104,5 @@ class MovieInfoProvider: ContentProvider() {
         mSelectionClause, // Selection criteria
         mSelectionArgs, // Selection criteria
         mSortOrder) // The sort order for the returned rows
-    /*resolver.insert(CONTENT_URI, myInsertValues)
-    resolver.update(CONTENT_URI, myUpdateValues)
-    resolver.delete(CONTENT_URI)*/
 
 }

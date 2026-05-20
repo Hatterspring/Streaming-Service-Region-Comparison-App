@@ -1,7 +1,9 @@
 package com.lboro.msbr
 
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
+import android.os.Bundle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lboro.msbr.data.provider.MovieInfoProvider.MovieInfoContract.MovieDetails.COLUMN_DESCRIPTION
@@ -41,16 +43,24 @@ class MovieDetailsInstrumentedTest
             null, // Selection criteria
             null)
     }
-    /*@Test
+    @Test(expected = UnsupportedOperationException::class)
     fun testInsertMovie() { //test insert a movie
-        resolver.insert()
+        resolver.insert(CONTENT_URI,
+            ContentValues()
+        )
     }
-    @Test
+    @Test(expected = UnsupportedOperationException::class)
+    fun testUpdateMovie() {
+        resolver.update(CONTENT_URI,
+            ContentValues(),
+            Bundle())
+    }
+    @Test(expected = UnsupportedOperationException::class)
     fun testDeleteMovie() { //test delete a movie
-        resolver.delete()
-    }*/
-    @Test(expected = IllegalArgumentException::class
-    )
+        resolver.delete(CONTENT_URI,
+            Bundle())
+    }
+    @Test(expected = IllegalArgumentException::class)
     fun testQueryInvalidUri() {
         resolver.query(INVALID_URI,
             arrayOf(COLUMN_ID, COLUMN_NAME, COLUMN_DESCRIPTION, COLUMN_IMAGE, COLUMN_RELEASE_DATE, COLUMN_RATING, COLUMN_SERVICE_INFO), // The columns to return for each row
@@ -58,7 +68,11 @@ class MovieDetailsInstrumentedTest
             null, // Selection criteria
             null)
     }
+    @Test
+    fun testGetType() {
+        resolver.getType(CONTENT_URI)
+    }
     @After
-    fun tearDown() {// clear the database if needed after test
+    fun tearDown() {
     }
 }

@@ -20,7 +20,9 @@ class MainActivity : ComponentActivity() {
     @Preview(showBackground=true)
     @Composable
     fun ComparisonPreview() {
-        Comparison(fusedLocClient)
+        MovieServiceByRegionTheme {
+            Comparison(null)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

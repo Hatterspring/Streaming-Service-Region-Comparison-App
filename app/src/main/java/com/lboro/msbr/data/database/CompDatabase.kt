@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [ProviderEntry::class, MovieDetailsEntry::class], version = 3)
+@Database(entities = [MovieDetailsEntry::class], version = 5)
 abstract class CompDatabase : RoomDatabase() {
     companion object {
         const val DB_NAME = "db"
@@ -24,7 +24,5 @@ abstract class CompDatabase : RoomDatabase() {
             }
         }
     }
-
-    abstract fun providerDao(): ProviderDao
     abstract fun movieDetailsDao(): MovieDetailsDao
 }

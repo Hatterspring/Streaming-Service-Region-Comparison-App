@@ -132,6 +132,7 @@ class CompViewModel() : ViewModel() {
                 }
                 _movieState.update({ movieDetails })
                 Log.d("unobserved state", _movieState.value.toString())
+                Log.i("uniform resource locator", baseUrl+"movie/$id/watch/providers")
                 val streamingJSON = getJSONFromApi(baseUrl+"movie/$id/watch/providers")
                 val streamingDetails = parseServiceInfoJSON(streamingJSON)
                 sortRegionServices(region, streamingDetails)
@@ -171,16 +172,12 @@ class CompViewModel() : ViewModel() {
     fun fetchProviderLink(context: Context) {
         var providerUrl = "https://www.themoviedb.org/movie/${_movieState.value[0]}".toUri()
         viewModelScope.launch {
-            if (providerUrl != null) {
-                Log.i("providerUrl", providerUrl.toString())
-                val webIntent = Intent(
-                    Intent.ACTION_VIEW,
-                    providerUrl
-                )
-                context.startActivity(webIntent)
-            } else {
-                Toast.makeText(context, "Could not find link for service!", Toast.LENGTH_SHORT).show()
-            }
+            Log.i("providerUrl", providerUrl.toString())
+            val webIntent = Intent(
+                Intent.ACTION_VIEW,
+                providerUrl
+            )
+            context.startActivity(webIntent)
         }
     }
 
@@ -332,6 +329,7 @@ class CompViewModel() : ViewModel() {
         if ("Network Error! Please check the network connection!" in json) {
             return arrayOf("Network Error! Please check the network connection!")
         }
+        Log.i("json object", json)
         val jObject = JSONObject(json)
         val jArray = jObject.getJSONArray("results")
         if (jArray.length() == 0) {
@@ -358,6 +356,9 @@ class CompViewModel() : ViewModel() {
      * for each entry, map the region to its available services
      */
     fun parseServiceInfoJSON(json: String): MutableMap<String,ServiceByRegion> {
+        if ("Network Error! Please check the network connection!" in json) {
+            throw MovieNotFoundException("Network Error! Please check the network connection!")
+        }
         var out: MutableMap<String, ServiceByRegion> = mutableMapOf()
         val resultsObject = JSONObject(json).getJSONObject("results")
         val objIterator = resultsObject.keys().iterator()
@@ -477,12 +478,4 @@ class CompViewModel() : ViewModel() {
             service_info = serviceDetailsToString()
         )
     }
-
-    fun goToProvider(name: String) {
-
-    }
-
-    /*fun mapServiceToURL(movie: String): Map<String, URL> {
-
-    }*/
 }

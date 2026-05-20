@@ -3,7 +3,11 @@ package com.lboro.msbr.ui
 import android.Manifest
 import android.app.Application
 import android.content.Context
+import android.location.Address
+import android.location.Geocoder
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -89,11 +93,29 @@ class DataViewModel(application: Application) : AndroidViewModel(application) {
      * update the ACCESS_COARSE_LOCATION permission
        to reflect whether it is granted or not
      */
-    fun onPermissionChange(permission: String, isGranted: Boolean) {
+    fun onPermissionChange(permission: String, isGranted: Boolean): Boolean {
         when (permission){
-            Manifest.permission.ACCESS_COARSE_LOCATION -> _permState.update { isGranted }
-            else -> Log.e("No recognised permission", "Permission not found: $permission")
+            Manifest.permission.ACCESS_COARSE_LOCATION -> {
+                _permState.update { isGranted }
+            }
+            else -> {
+                Log.e("No recognised permission", "Permission not found: $permission")
+            }
+
         }
+        return isGranted
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun getRegionByCoords(lat: Double, lon: Double, callback: (String?) -> Unit) {
+        val geo = Geocoder(context)
+
+        geo.getFromLocation(lat,lon,1, object: Geocoder.GeocodeListener {
+            override fun onGeocode(addresses: List<Address?>) {
+                Log.i("locations", addresses.toString())
+                callback(addresses.firstOrNull()?.countryName)
+            }
+        })
     }
 
     /****************************************************

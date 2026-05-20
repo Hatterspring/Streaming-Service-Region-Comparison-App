@@ -7,13 +7,16 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -25,6 +28,11 @@ import com.lboro.msbr.ui.comparison.CompViewModel
 import com.lboro.msbr.ui.menu.MenuScreen
 import com.lboro.msbr.ui.menu.MenuViewModel
 import com.lboro.msbr.ui.settings.SettingsScreen
+import com.lboro.msbr.ui.theme.Black
+import com.lboro.msbr.ui.theme.GreyDark
+import com.lboro.msbr.ui.theme.LightGrey
+import com.lboro.msbr.ui.theme.Red
+import com.lboro.msbr.ui.theme.White
 
 /****************************************************
  DATA
@@ -38,7 +46,7 @@ import com.lboro.msbr.ui.settings.SettingsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Comparison(locationClient: FusedLocationProviderClient, modifier: Modifier = Modifier) {
+fun Comparison(locationClient: FusedLocationProviderClient?, modifier: Modifier = Modifier) {
     /****************************************************
     VARIABLES
      ****************************************************/
@@ -54,15 +62,25 @@ fun Comparison(locationClient: FusedLocationProviderClient, modifier: Modifier =
     Scaffold (topBar = {
         TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                titleContentColor = MaterialTheme.colorScheme.primary
+                containerColor = Black,
+                titleContentColor = Red,
+                actionIconContentColor = LightGrey
             ),
             title = {
-                Text("Movies By Region")
+                Text(
+                    text="Movies By Region",
+                    style = TextStyle(
+                        fontFamily = FontFamily.SansSerif,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    ))
+
             },
             actions = {
                 //top app bar home button
-                IconButton(onClick = {navController.navigate(route=Screens.Menu.name)}) {
+                IconButton(
+                    onClick = {navController.navigate(route=Screens.Menu.name)}
+                ) {
                     Icon(Icons.Filled.Home, contentDescription = "Return to main menu")
                 }
                 //top app bar settings button
@@ -71,8 +89,7 @@ fun Comparison(locationClient: FusedLocationProviderClient, modifier: Modifier =
                 }
             }
         )
-    }
-    ){ innerPadding ->
+    }){ innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screens.Menu.name,
@@ -88,7 +105,7 @@ fun Comparison(locationClient: FusedLocationProviderClient, modifier: Modifier =
             }
             //navigate to comparison screen
             composable(route=Screens.Comp.name) {
-                CompScreen(compViewModel, navController, dataViewModel, modifier)
+                CompScreen(compViewModel, navController, dataViewModel)
             }
         }
     }

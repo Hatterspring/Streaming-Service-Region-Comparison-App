@@ -14,10 +14,12 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -26,19 +28,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.lboro.msbr.ui.DataViewModel
+import com.lboro.msbr.ui.theme.Black
+import com.lboro.msbr.ui.theme.Red
+import com.lboro.msbr.ui.theme.White
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     dataViewModel: DataViewModel,
-    locationClient: FusedLocationProviderClient,
+    locationClient: FusedLocationProviderClient?,
     modifier: Modifier
 ) {
     /****************************************************
@@ -56,6 +66,8 @@ fun SettingsScreen(
 
     //establish state for the current region and updates to it
     var text by remember {mutableStateOf(region)}
+
+    val loc = ACCESS_COARSE_LOCATION
 
     /****************************************************
      FUNCTIONS
@@ -77,25 +89,14 @@ fun SettingsScreen(
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun getRegionByCoords(lat: Double, lon: Double, callback: (String?) -> Unit) {
-        val geo = Geocoder(context)
-
-        geo.getFromLocation(lat,lon,1, object: Geocoder.GeocodeListener {
-            override fun onGeocode(addresses: List<Address?>) {
-                Log.i("locations", addresses.toString())
-                callback(addresses.firstOrNull()?.countryName)
-            }
-        })
-    }
-
     fun getLocation() {
-        locationClient.getLastLocation()
-            .addOnSuccessListener{ loc ->
+        locationClient?.getLastLocation()
+            ?.addOnSuccessListener{ loc ->
                 if (loc != null) {
                     Log.i("location information", loc.toString())
                     val lat = loc.latitude
                     val lon = loc.longitude
-                    getRegionByCoords(lat,lon) {r ->
+                    dataViewModel.getRegionByCoords(lat,lon) {r ->
                         Log.i("region saved", r!!)
                         text = r
                         coroutineScope.launch {
@@ -121,22 +122,56 @@ fun SettingsScreen(
             }
     }
 
+    val permRequest = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (dataViewModel.onPermissionChange(loc, granted)) {
+            getLocation()
+        } else {
+            Toast.makeText(context, "Location currently disabled due to denied permission.", Toast.LENGTH_LONG).show()
+        }
+    }
+
 
     /****************************************************
      STRUCTURE
      ****************************************************/
     Column(
         modifier = Modifier
-            .padding(all=20.dp)
+            .padding(all=24.dp)
     ) {
-        Text("Current Region: $region")
+        Text("Current Region: $region",
+                modifier = Modifier
+                .padding( bottom = 10.dp)
+            )
         TextField(
             value=text ?: "",
-            label = {Text("Change Region")},
+            label = {Text(text="Change Region")},
             onValueChange = {
                 text = it
-            }
+            },
+            shape = RoundedCornerShape(40.dp),
+
+            singleLine = true,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Black,
+                unfocusedContainerColor = Black,
+                focusedTextColor = White,
+                unfocusedTextColor = White,
+                focusedLabelColor = Red,
+                unfocusedLabelColor = White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            textStyle = TextStyle(
+                fontFamily = FontFamily.SansSerif,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier
+                .padding( horizontal = 10.dp)
         )
+
         Row() {
             Button(onClick={
 
@@ -150,23 +185,20 @@ fun SettingsScreen(
                 }
 
                 },
-                modifier = Modifier.padding(end = 5.dp)
+                modifier = Modifier.padding( 10.dp)
             ) {
                 Text("Save Region")
             }
-            //Use the current location to save a region
+
             Button(
                 onClick = {
-                    if (ContextCompat.checkSelfPermission(context, ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        dataViewModel.onPermissionChange(ACCESS_COARSE_LOCATION, hasPermission(ACCESS_COARSE_LOCATION))
+                    if (hasPermission(loc)){
                         getLocation()
                     } else {
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar("Location currently disabled due to denied permission.")
-                        }
+                        permRequest.launch(loc)
                     }
-
-                }
+                },
+                modifier = Modifier.padding( 10.dp)
             ) {
                 Text("Use Last Location")
             }
